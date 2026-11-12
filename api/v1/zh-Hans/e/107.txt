@@ -1,0 +1,46 @@
+// Motion Prompt #107 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#107
+//
+// 长曝光 / Long exposure
+// 分类: photo (摄影效果、光线与风格) · element 11 · 子类别: 镜头与相机效果
+// 示例表现: 街景变成夜晚，行驶中的汽车几乎淡出，只留下向后延伸的红色尾灯轨迹；对向车道则出现白色与琥珀色光轨。
+// 动画参数与实现规则:
+//   - 场景 2：街角中，建筑、树木和路灯（x 114、292、494）位于 y 132–162 的道路后方；人物站在左前方，脚底位于 x 176、y 200，身高 124 px。色彩转为夜景，天空为 #2C3B5E，每三扇窗中有一扇亮起 #FFC75A。
+//   - 汽车每 5 s 从 x −60 → 600；车身不透明度从 100% → 10%。
+//   - 尾灯轨迹从 x −60 延伸到汽车当前位置：y 145 处为粗 2.6 px 的 #FF5B4D，y 149 处为粗 1.4 px 的 #FF8A6E。
+//   - 对向车道绘制贯穿画面宽度的光轨：y 135 处为 #FFE9B8、粗 2.6 px；y 138.5 处为 #FFC75A、粗 1.6 px；y 141.5 处为 #FFE9B8、粗 1.2 px，随效果一起淡入。
+//   - 右上角快门速度从 1/250 → 8″。
+//   - 时序：效果在 0.4 s 至 1.4 s 进入，保持到 4.0 s，并在 4.8 s 前完全消失；单次周期 = 5 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+// 适用场景: 适合在单张照片中表现车流，或丝滑的水流与云层。
+// 标签: long exposure, light trails, slow shutter, night photography, car trails, motion, 长曝光, 光轨, 车流, 夜景, 快门, 流动
+// 尺寸: 539x208 px · 周期: 5 s
+// 依赖: kit photo -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/photo.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#107
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 11
+// 長時間露光: シャッターを開け続けると、夜道の車は消え、ライトだけが光の線になる
+CELLS[10] = cell((k, u) => {
+  const a = env(u), x = lerp(-60, 600, u / CYC);
+  const p = pal(BASE, NIGHT, a);
+  stageStreet(k, p, {
+    car: false, person: false,
+    after: D => {
+      const kk = D.k;
+      // 車の通った跡: 尾灯（赤）と前照灯（白〜アンバー）の線。車の後ろに伸びる
+      kk.save(); kk.globalAlpha = a; kk.lineCap = 'round';
+      const x0 = -60, x1 = Math.min(x, CW + 40);
+      const ln = (ya, yb, c1, c2, w1, w2) => { kk.strokeStyle = c1; kk.lineWidth = w1; kk.beginPath(); kk.moveTo(x0, ya); kk.lineTo(x1, ya); kk.stroke(); kk.strokeStyle = c2; kk.lineWidth = w2; kk.beginPath(); kk.moveTo(x0, yb); kk.lineTo(x1, yb); kk.stroke(); };
+      ln(145, 149, '#FF5B4D', '#FF8A6E', 2.6, 1.4);
+      // 反対車線の車たちの跡（画面いっぱい）
+      for (const [y, c, lw] of [[135, '#FFE9B8', 2.6], [138.5, BASE.lit, 1.6], [141.5, '#FFE9B8', 1.2]]) { kk.strokeStyle = c; kk.lineWidth = lw; kk.beginPath(); kk.moveTo(-10, y); kk.lineTo(CW + 10, y); kk.stroke(); }
+      kk.restore();
+    }
+  });
+  // 車の本体は露光が長いほど薄く写る
+  k.save(); k.globalAlpha = 1 - 0.9 * a; const D = pen(k);
+  car(D, x, p, { head: BASE.lit, tail: '#FF5B4D' }); k.restore();
+  figure(pen(k), FIG[0], FIG[1], FIG[2], p.person);
+  hud(k, a > 0.5 ? '8″' : '1/250');
+});

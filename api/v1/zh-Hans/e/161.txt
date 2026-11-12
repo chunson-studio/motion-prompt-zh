@@ -1,0 +1,48 @@
+// Motion Prompt #161 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#161
+//
+// 视图过渡 / View transition (shared element)
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 17 · 子类别: 亮点展示
+// 示例表现: 点击列表中的照片后，同一张照片连续放大并移动到详情页顶部，其余内容同时切换为详情页；返回时，照片缩回列表中的原位。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168，列表中有三张照片，各为 143 × 80、圆角半径 6。在 0.75 s 点击中间照片，在 3.05 s 点击详情页的“← 返回列表”。一次演示为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 进入详情：在 0.85–1.45 s，持续 0.6 s，使用三次缓入缓出；被点击的照片从列表位置连续移动并调整尺寸，变为详情页顶部的 479 × 94 图像，圆角半径 8。全程保持为同一张照片。
+//   - 移动过程的前 62% 内，其他照片和页面标题淡出；最后 40% 内，详情标题、文字和返回按钮淡入。进度达到 50% 时，URL 从 /works 变为 /works/02。
+//   - 返回：在 3.15–3.75 s，持续 0.6 s，以相反方向执行同样的移动，回到列表位置。
+//   - 该效果展示了列表照片与详情照片拥有相同 view-transition-name 时，View Transitions API 所呈现的共享元素过渡。
+// 适用场景: 适合在列表与详情之间切换的画廊或商品页面，让用户始终清楚自己打开的是哪个内容。
+// 标签: view-transition, shared-element, page-transition, morph, gallery, navigation, 视图过渡, 共享元素, 列表, 详情, 照片, 连续
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#161
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 17
+// 17 ビュートランジション（一覧の写真を押すと、その写真がそのまま大きくなって詳細ページの上部になる）
+CELLS[16] = (k, w, h, u) => {
+  u = snapU(u);
+  const e = u < 2.0 ? eIO(P(u, 0.85, 1.45)) : 1 - eIO(P(u, 3.15, 3.75));
+  frame(k, e > 0.5 ? 'example.com/works/02' : 'example.com/works');
+  const G = [24, 184, 344], GY = 44, GW = 143, GH = 80, NM = ['雪中小屋', '海边咖啡馆', '夜景观景台'], PV = [0, 1, 2];
+  const T = { x: 16, y: 10, w: VW - 32, h: 94 };
+  const cur = t => path([[0, 420, 205], [0.5, 262, 88], [0.95, 262, 88], [1.6, 380, 150], [2.55, 380, 150], [2.9, 62, 30], [3.2, 62, 30], [3.9, 420, 205], [4.7, 420, 205]], t);
+  const [cx, cy] = cur(u);
+  view(k, () => {
+    const ga = 1 - clamp(e * 1.6);
+    k.save(); k.globalAlpha = ga;
+    txt(k, 'WORKS', 24, 30, `800 15px ${EN}`, C.ink, 'left', 'alphabetic', '2px');
+    for (let i = 0; i < 3; i++) { if (i !== 1) pic(k, G[i], GY, GW, GH, PV[i], 6); txt(k, NM[i], G[i], GY + GH + 20, `800 13px ${JP}`, C.ink); bars(k, G[i], GY + GH + 30, 90, 1, C.faint, 5); }
+    k.restore();
+    const x = lerp(G[1], T.x, e), y = lerp(GY, T.y, e), ww = lerp(GW, T.w, e), hh = lerp(GH, T.h, e);
+    pic(k, x, y, ww, hh, 1, lerp(6, 8, e));
+    const da = clamp((e - 0.6) / 0.4);
+    if (da > 0) {
+      k.save(); k.globalAlpha = da;
+      k.fillStyle = 'rgba(255,255,255,.92)'; rr(k, 26, 19, 74, 22, 11); k.fill(); txt(k, '← 返回列表', 63, 30.5, `700 11px ${JP}`, C.ink, 'center', 'middle');
+      txt(k, '海边咖啡馆', 24, 134, `800 19px ${JP}`, C.ink); bars(k, 200, 122, 280, 3, C.faint, 6, 12, 0.7);
+      k.restore();
+    }
+    click(k, cx, cy, u, [0.75, 3.05]);
+  });
+};

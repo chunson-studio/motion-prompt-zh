@@ -1,0 +1,36 @@
+// Motion Prompt #188 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#188
+//
+// 圈出 / Iris out
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 20 · 子类别: 转场与剪辑
+// 示例表现: 圆形视窗围绕人物逐渐收拢，直到画面全黑，再在下一场景中重新张开。
+// 动画参数与实现规则:
+//   - 圈出：在 1.3–2.7 s，持续 1.4 s，圆形视窗半径从 340 px 缩至 0；使用二次缓入缓出，约等于 cubic-bezier(0.45,0,0.55,1)。圆外为黑色 #141418。
+//   - 视窗中心取当前画面主体的屏幕投影位置：A 中为人物头部，位于左侧 0.6 m、高 1.63 m、前方 7 m；B 中为汽车，位于右侧 1.2 m、高 0.9 m、前方 9 m。
+//   - 黑场：2.7–3.1 s；在 2.9 s 直接剪切换入下一画面。
+//   - 圈入：在 3.1–4.4 s，持续 1.3 s，圆形视窗以新画面的主体为中心，半径从 0 增至 340 px。
+//   - 边缘：半径至少为 1 px 时，用 2 px 宽的蓝色圆线描出边缘；两幅画面中的相机均固定。
+//   - 每 4.7 s 交替执行 A→B 和 B→A，完整往返为 9.4 s。右上角读数显示“IRIS OUT”或“IRIS IN”。
+// 适用场景: 适合默片或卡通风格的结尾，也可用于轻松俏皮的段落切换。
+// 标签: iris out, iris in, iris wipe, circle, old film, cartoon, transition, 圈出, 圈入, 圆形遮罩, 转场, 默片, 卡通
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#188
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 20
+// 20 アイリスアウト: 人物を中心に丸い窓が閉じて黒になり、次の場面は丸い窓が開いて現れる
+CELLS[19] = shot(abCell((k, w, h, u, A, B) => {
+  const out = eIOs(P(u, 1.3, 2.7)), inn = eIOs(P(u, 3.1, 4.4));
+  const first = u < 2.9, cur = first ? A : B;
+  cur(k, w, h);
+  // 窓の中心は、いま映っている場面の主役（Aは人物の頭、Bは車）
+  const c = cur === sceneA ? proj(cam({ y: 1.4 }), -0.6, 1.63, 7) : proj(cam({ y: 1.6, pitch: 0.1 }), 1.2, 0.9, 9);
+  const rad = first ? lerp(340, 0, out) : lerp(0, 340, inn);
+  const cx = w / 2 + c.x, cy = h / 2 + c.y;
+  if (rad < 339) {
+    k.fillStyle = '#141418'; k.beginPath(); k.rect(0, 0, w, h); k.arc(cx, cy, Math.max(0, rad), 0, Math.PI * 2, true); k.fill('evenodd');
+    if (rad > 1) { k.strokeStyle = C.blue; k.lineWidth = 2; k.beginPath(); k.arc(cx, cy, rad, 0, 7); k.stroke(); }
+  }
+}, u => u < 2.9 ? 'IRIS OUT' : 'IRIS IN'));

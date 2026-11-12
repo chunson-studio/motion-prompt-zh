@@ -1,0 +1,25 @@
+// Motion Prompt #027 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#027
+//
+// 推镜头 / Dolly in
+// 分类: camera (镜头运动与转场) · element 03 · 子类别: 镜头运动
+// 示例表现: 相机本身向主体靠近，近处物体迅速变大并掠过，而远方山脉几乎不变。
+// 动画参数与实现规则:
+//   - 相机：沿纵深向前移动 0 m→5.8 m；高度 1.5 m，朝向和焦距固定，焦距为 330 px，标示为 24mm。
+//   - 时序：0.5–3.4 s，持续 2.9 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+//   - 主体：人物静立在前方 8 m；相机与人物的距离从 8 m→2.2 m，因此人物看起来放大约 3.6×。
+//   - 视差：前景立柱位于左侧 1.5 m、纵深 3.6 m，石头位于右侧 1.6 m、纵深 4.8 m，二者会掠出画面；120 m 以外的山脉尺寸几乎不变。
+//   - 返回：在 3.4–4.2 s 保持静止，再在最后 0.5 s 交叉淡化回起始状态，一次演示为 4.7 s。
+//   - 右上角读数始终为 24mm，这是与本组第 04 项变焦推近的区别。
+// 适用场景: 适合在保持纵深感的同时接近人物或细节。
+// 标签: dolly, dolly in, push in, track in, move forward, parallax, camera move, 镜头, 推镜头, 推进, 前移, 视差, 纵深
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#027
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 03
+// 03 ドリーイン: カメラ位置が前へ（手前は大きく、奥はほぼそのまま）
+CELLS[2] = shot(camCell((k, w, h, p) => world(k, w, h, cam({ z: lerp(0, 5.8, p) }), { person: { z: 8 }, fg: [[-1.5, 3.6], [1.6, 4.8, 'rock']] }),
+  p => mm(F0)));

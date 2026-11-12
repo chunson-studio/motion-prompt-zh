@@ -1,0 +1,31 @@
+// Motion Prompt #130 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#130
+//
+// 波浪文字 / Wave text
+// 分类: motion2 (动态图形（第 2 弹）) · element 10 · 子类别: 文字与图形
+// 示例表现: “WAVE TEXT”的字母依次上下起伏，形成波浪。
+// 动画参数与实现规则:
+//   - 文字为“WAVE TEXT”，字号 70 px、粗体、字距 4 px。每 4.7 s 完成三次波动，每次 1.567 s。
+//   - 第 i 个字母的垂直偏移为 −28·sin(φ − 0.62i)，其中 φ = 2π × 3 × time ÷ 4.7；每个字母比前一个滞后 0.62 rad。
+//   - 上升中的字母沿垂直方向拉伸，比例为 1 + 0.06·s，并从白色向黄色变化；s 为正弦值，计算颜色时将其限制在 0–1。
+//   - 每个字母下方都有椭圆形阴影，随字母升高而缩小。
+// 适用场景: 适合标志、短标题，或与音乐节拍同步的字幕，增加趣味和节奏感。
+// 标签: wave-text, wave, text, letters, stagger, bounce, kinetic-type, 文字, 波浪, 起伏, 节奏, 字幕, 标志
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#130
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 10
+// 10 ウェーブテキスト（1文字ずつ、波のように順に上下する）
+CELLS[9] = (k, w, h, u) => {
+  stage(k);
+  const f = `800 70px ${DISP}`, cs = chars(k, 'WAVE TEXT', f, 4), Y = h / 2 + 2, ph = 2 * Math.PI * 3 * u / CYC;
+  cs.forEach((c, i) => {
+    if (c.ch === ' ') return;
+    const s = Math.sin(ph - i * 0.62), y = -28 * s;
+    k.fillStyle = 'rgba(0,0,0,.3)'; k.beginPath(); k.ellipse(w / 2 + c.x, Y + 62, c.w * (0.42 - 0.12 * s), 4, 0, 0, 7); k.fill();
+    k.save(); k.translate(w / 2 + c.x, Y + y); k.scale(1, 1 + 0.06 * s); txt(k, c.ch, 0, 0, f, mix('#FFFFFF', C.yel, clamp(s)), 'center', 'middle'); k.restore();
+  });
+};

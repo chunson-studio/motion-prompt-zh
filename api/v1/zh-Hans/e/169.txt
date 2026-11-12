@@ -1,0 +1,25 @@
+// Motion Prompt #169 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#169
+//
+// 垂直升降镜头 / Pedestal
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 01 · 子类别: 镜头运动
+// 示例表现: 相机保持朝向不变，垂直向上移动；地平线始终位于画面中央，人物和建筑则向下滑动。
+// 动画参数与实现规则:
+//   - 相机：从 1.0 m 高度垂直升至 3.2 m；朝向，即偏航角和俯仰角，以及焦距 330 px 均保持不变。
+//   - 时序：0.5–3.4 s，持续 2.9 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+//   - 主体：人物静立在前方 7 m 处，在画面中向下移动，双脚先从底部离开；一座塔位于右侧 3.5 m、前方 26 m 处。
+//   - 由于俯仰角不变，地平线保持在画面中央；#031 升起摇臂镜头则会在上升的同时向下俯拍。
+//   - 返回：在 3.4–4.2 s 保持静止，再在最后 0.5 s 交叉淡化回起始状态，一次演示为 4.7 s。
+//   - 右上角读数显示高度：↕ 1.0m→↕ 3.2m。
+// 适用场景: 适合平滑地由下至上展示货架或建筑，或在不改变俯仰角的情况下调整观察高度。
+// 标签: pedestal, boom, vertical move, rise, elevate, camera move, no tilt, 镜头, 垂直升降, 上升, 机位, 地平线, 建筑
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#169
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 01
+// 01 ペデスタル: カメラごと真上へ平行移動。向き（ピッチ）は変えないので地平線は画面の中央のまま（#031 クレーンアップとの違い）
+CELLS[0] = shot(camCell((k, w, h, p) => world(k, w, h, cam({ y: lerp(1.0, 3.2, p) }), { person: { z: 7 }, tower: [3.5, 26], buildings: true }),
+  p => `↕ ${lerp(1.0, 3.2, p).toFixed(1)}m`));

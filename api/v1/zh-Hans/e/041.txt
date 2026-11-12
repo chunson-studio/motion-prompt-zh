@@ -1,0 +1,31 @@
+// Motion Prompt #041 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#041
+//
+// 跳切 / Jump cut
+// 分类: camera (镜头运动与转场) · element 17 · 子类别: 转场
+// 示例表现: 相机位置和构图保持不变，人物位置与时钟却突然跳变，在同一场景中省略时间。
+// 动画参数与实现规则:
+//   - 衔接：没有效果的直接剪切，过渡为 0 帧；共有 5 个镜头，每个 0.94 s，即 4.7 s ÷ 5。
+//   - 相机：每个镜头中的位置和构图完全一致，高度 1.4 m，朝向正前方；背景不发生任何像素级移动。
+//   - 变化内容：前方 7 m 处的人物横向位置依次跳为 -2.2 m→1.4 m→-0.4 m→2.4 m→0.6 m；第 2 和第 4 个镜头中，人物双臂举起。
+//   - 每个镜头内部，人物保持静止；跳变只通过位置和姿态差异表现。
+//   - 右上角时钟依次为 10:02→10:17→10:41→11:06→11:30，说明同一地点的时间被跳过。
+//   - 第 5 个镜头直接切回第 1 个镜头。
+// 适用场景: 适合删减说话或工作过程中的停顿，加快节奏，或表现时间快速流逝。
+// 标签: jump cut, cut, time skip, same framing, vlog, ellipsis, edit, 跳切, 剪辑, 时间跳跃, 节奏, 固定构图, 人物
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#041
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 17
+// 17 ジャンプカット（同じ画角で人物の位置と時刻だけ飛ぶ）
+CELLS[16] = shot((k, w, h, u) => {
+  const shots = [[-2.2, 0], [1.4, 1], [-0.4, 0], [2.4, 1], [0.6, 0]];
+  const times = ['10:02', '10:17', '10:41', '11:06', '11:30'];
+  const i = Math.min(4, Math.floor(u / (CYC / 5)));
+  const [x, arm] = shots[i];
+  world(k, w, h, cam({ y: 1.4 }), { person: { x, z: 7, armUp: !!arm } });
+  return times[i];
+});

@@ -1,0 +1,46 @@
+/* Chinese typography and small usability refinements; preserve the original visual identity. */
+:root { --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; }
+.zh-badge { display: inline-block; margin-left: 7px; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 4px; font-size: 11px; font-weight: 500; line-height: 1.6; vertical-align: 2px; color: var(--muted); }
+.hero { padding-block: 48px 44px; gap: 64px; align-items: center; }
+:lang(zh-Hans) h1 { font-size: clamp(38px, 5.2vw, 72px); line-height: 1.22; letter-spacing: -.045em; word-break: normal; overflow-wrap: normal; }
+:lang(zh-Hans) .eyebrow { font-size: 13px; letter-spacing: .12em; margin-bottom: 20px; }
+:lang(zh-Hans) .lead { font-size: 16px; line-height: 1.9; max-width: 35em; margin-top: 22px; }
+.browse-link { display: inline-flex; gap: 18px; align-items: center; margin-top: 18px; font-size: 14px; font-weight: 650; color: var(--accent); text-decoration: none; }
+.browse-link span { font-size: 20px; }
+:lang(en) .browse-link, :lang(ja) .browse-link { display: none; }
+.facts { margin-top: 24px; gap: 32px; }
+.facts dt { margin-bottom: 5px; }
+.facts dd { font-size: 27px; }
+.install { padding: 18px 20px; }
+.install-p { line-height: 1.8; }
+.tile-name { line-height: 1.55; }
+.tile-sub { line-height: 1.5; }
+.tile-stage canvas { display: block; }
+.d-spec { line-height: 1.9; }
+.d-prompt { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; }
+.d-ask { line-height: 1.9; }
+.tray-note input { font-size: 14px; }
+.top-gh { padding-inline: 8px; }
+.seg-b[data-lang="zh-Hans"] { font-family: var(--font); }
+.seg-b { min-width: 32px; }
+@media (max-width: 1000px) {
+  .hero { gap: 32px; }
+  :lang(zh-Hans) h1 { font-size: clamp(38px, 5.7vw, 62px); }
+}
+@media (max-width: 720px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding-block: 30px; gap: 24px; }
+  .hero-install { grid-template-columns: minmax(0, 1fr); }
+  :lang(zh-Hans) h1 { font-size: clamp(36px, 8.6vw, 58px); }
+  .top-nav { gap: 1px; }
+  .top-link { font-size: 12px; padding-inline: 6px; }
+  .logo { font-size: 15px; }
+  .zh-badge { margin-left: 3px; padding-inline: 4px; }
+  .seg { margin-left: 3px; }
+  .seg-b { padding: 5px 5px; min-width: 27px; }
+  .hero-install .install:first-child { order: 2; }
+}
+@media (max-width: 420px) {
+  .top-nav .top-link { display: none; }
+  .wrap { padding-inline: 16px; }
+  .hero { gap: 22px; }
+}

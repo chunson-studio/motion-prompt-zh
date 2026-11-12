@@ -1,0 +1,37 @@
+// Motion Prompt #063 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#063
+//
+// 步进器 / Stepper (+/−)
+// 分类: ui (UI 组件) · element 15 · 子类别: 切换与输入
+// 示例表现: 连续点击三次 +，数字从 1 增至 4；再点击三次 −，回到 1。每次点击，数字都会轻微弹动。
+// 动画参数与实现规则:
+//   - 在 542×191 的卡片上，周期为 4.5 s。位置 (171, 52) 有一个尺寸 200×60、圆角半径 12 的框；左侧 60 px 显示“−”，右侧 60 px 显示蓝色“+”，中间为 30 px 粗体数字。
+//   - 点击：在 0.9、1.35、1.8 s 点击 +，数值从 1→4；在 2.8、3.25、3.7 s 点击 −，数值从 4→1。
+//   - 每次点击前 0.05 s 至点击后 0.15 s，被按下的区段显示浅蓝色底。
+//   - 数字：每次按下后，缩放比例在 0.25 s 内从 1.18 线性恢复为 1，同时数字保持蓝色。
+// 适用场景: 适合每次增减一的较小整数，例如商品数量或入住人数。
+// 标签: stepper, quantity, number-input, increment, decrement, plus-minus, spin-button, 步进器, 加减, 数量, 整数, 按钮, 反馈
+// 尺寸: 542x191 px · 周期: 4.5 s
+// 依赖: kit ui -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/ui.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#063
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 15
+// 15 ステッパー（Stepper (+/−)）
+CELLS[14] = ui((w, h, t) => {
+  bar(171, 24, 90, C.line2, 10);
+  const plus = [.9, 1.35, 1.8], minus = [2.8, 3.25, 3.7];
+  let n = 1; plus.forEach(c => { if (t >= c) n++; }); minus.forEach(c => { if (t >= c) n--; });
+  const last = [...plus, ...minus].filter(c => t >= c).pop();
+  const pop = last !== undefined ? 1 - seg(t, last, last + .25) : 0;
+  const bx = 171, by = 52, bw = 200, bh = 60;
+  strokeRR(bx, by, bw, bh, 12, C.line2, 1.8);
+  const pressP = plus.some(c => t >= c - .05 && t < c + .15), pressM = minus.some(c => t >= c - .05 && t < c + .15);
+  if (pressM) fillRR(bx + 2, by + 2, 58, bh - 4, 10, C.lb); if (pressP) fillRR(bx + bw - 60, by + 2, 58, bh - 4, 10, C.lb);
+  X.fillStyle = C.line2; X.fillRect(bx + 60, by + 10, 1.5, bh - 20); X.fillRect(bx + bw - 61, by + 10, 1.5, bh - 20);
+  text('−', bx + 30, by + bh / 2, 30, '#555', 500, 'center', NUMF); text('+', bx + bw - 30, by + bh / 2, 30, C.blue, 500, 'center', NUMF);
+  X.save(); X.translate(bx + bw / 2, by + bh / 2 + 1); X.scale(1 + .18 * pop, 1 + .18 * pop); text(String(n), 0, 0, 30, pop > .05 ? C.blue : C.ink, 700, 'center', NUMF); X.restore();
+  bar(171, 136, 200, C.line); bar(171, 154, 140, C.line);
+  pointer([[.3, w + 30, h + 30], [.85, 342, 86], [2.3, 342, 86], [2.75, 202, 86], [3.75, 202, 86], [4.3, w + 30, h + 30]], [...plus, ...minus], t);
+});

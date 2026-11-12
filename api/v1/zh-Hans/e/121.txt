@@ -1,0 +1,50 @@
+// Motion Prompt #121 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#121
+//
+// 预备动作 / Anticipation
+// 分类: motion2 (动态图形（第 2 弹）) · element 01 · 子类别: 动效技巧
+// 示例表现: 方形角色先逆着前进方向后退，挤压身体蓄力，再迅速向前冲出。
+// 动画参数与实现规则:
+//   - 每 2.35 s 动作一次，即每 4.7 s 两次，先从左到右，再从右到左。角色为边长 86 px、圆角半径 24 的珊瑚色方形，内部带白色箭头；起点距边缘 108 px，地面位于 y = 178。
+//   - 蓄力阶段为 0.2–0.95 s，使用二次缓入缓出；向运动反方向后退 44 px，身体变为宽 1.22 × 高 0.76，并向后倾斜 0.18 rad。
+//   - 发射阶段为 0.95–1.38 s，共 0.43 s；从后退位置冲向远端，使用 backOut，s = 1.1，带轻微过冲。运动前 60% 中，身体按半个正弦波拉伸至宽 1.55 × 高 0.72，并向前倾斜 0.08 rad。
+//   - 落地：从 1.38 s 开始，宽度与高度按 0.13·e^(−7t)·sin(17t) 向相反方向振动。
+//   - 发射时，起点扬起三团灰尘，在运动前 70% 内消失；角色后方同时出现三条宽 8 的黄色速度线。
+// 适用场景: 适合放在跳跃、冲刺或发射之前，让动作有蓄力感和重量感。
+// 标签: anticipation, wind-up, squash, character, jump, dash, animation-principle, 预备动作, 蓄力, 后退, 冲刺, 挤压, 发射
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#121
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 01
+// 01 アンティシペーション（進む向きと逆へ少し引いて、つぶれて溜めてから、勢いよく飛び出す）
+CELLS[0] = (k, w, h, u) => {
+  u = snapU(u);
+  stage(k);
+  const T = CYC / 2, n = Math.floor(u / T), lu = u - n * T, dir = n % 2 ? -1 : 1;
+  const XL = 108, XR = w - 108, xs = dir > 0 ? XL : XR, xe = dir > 0 ? XR : XL, floor = h - 30, S = 86, BACK = 44;
+  k.fillStyle = C.navy3; rr(k, 26, floor, w - 52, 5, 2.5); k.fill();
+  const wind = eIOs(P(lu, 0.2, 0.95)), go = P(lu, 0.95, 1.38);
+  let x, sx = 1, sy = 1, rot = 0;
+  if (go <= 0) { x = xs - dir * BACK * wind; sx = 1 + 0.22 * wind; sy = 1 - 0.24 * wind; rot = -dir * 0.18 * wind; }
+  else {
+    x = lerp(xs - dir * BACK, xe, backOut(go, 1.1));
+    const st = go < 0.6 ? Math.sin(Math.PI * go / 0.6) : 0;
+    sx = 1 + 0.55 * st; sy = 1 - 0.28 * st; rot = dir * 0.08 * st;
+    const land = lu - 1.38; if (land > 0) { const wob = 0.13 * Math.exp(-7 * land) * Math.sin(17 * land); sy = 1 - wob; sx = 1 + wob; }
+  }
+  // 飛び出した地点の土けむり
+  if (go > 0 && go < 0.7) { const q = go / 0.7; k.fillStyle = C.dim; k.globalAlpha = 0.8 * (1 - q); for (let i = 0; i < 3; i++) { k.beginPath(); k.arc(xs - dir * (BACK + 30 + i * 22 + q * 30), floor - 8 - i * 6 - q * 10, 7 + q * 12 - i * 2, 0, 7); k.fill(); } k.globalAlpha = 1; }
+  // 影
+  k.fillStyle = 'rgba(0,0,0,.3)'; k.beginPath(); k.ellipse(x, floor + 8, S * 0.62 * sx, 6, 0, 0, 7); k.fill();
+  // スピード線
+  if (go > 0.02 && go < 0.8) { const a = 1 - go / 0.8; k.strokeStyle = C.yel; k.lineCap = 'round'; k.lineWidth = 8; k.globalAlpha = a;[0.28, 0.55, 0.8].forEach((f, i) => { const y = floor - S * sy * f, x0 = x - dir * (S * sx / 2 + 12), L = 120 * a + 20; k.beginPath(); k.moveTo(x0, y); k.lineTo(x0 - dir * L * (i === 1 ? 1 : 0.7), y); k.stroke(); }); k.globalAlpha = 1; }
+  k.save(); k.translate(x, floor); k.rotate(rot); k.scale(sx, sy);
+  k.fillStyle = C.coral; rr(k, -S / 2, -S, S, S, 24); k.fill();
+  k.fillStyle = 'rgba(255,255,255,.16)'; rr(k, -S / 2, -S, S, S / 2, [24, 24, 0, 0]); k.fill();
+  k.strokeStyle = '#fff'; k.lineWidth = 10; k.lineCap = 'round'; k.lineJoin = 'round';
+  k.beginPath(); k.moveTo(-dir * 12, -S / 2 - 20); k.lineTo(dir * 12, -S / 2); k.lineTo(-dir * 12, -S / 2 + 20); k.stroke();
+  k.restore();
+};

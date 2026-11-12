@@ -1,0 +1,51 @@
+// Motion Prompt #160 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#160
+//
+// 加载按钮 / Loading button
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 16 · 子类别: 鼠标与输入交互
+// 示例表现: 点击提交按钮后，按钮缩成圆形，内部显示旋转加载图标；完成后展开为绿色按钮，并显示对勾和“完成”。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168，橙色胶囊按钮尺寸 220 × 36，标签为“发送”。在 0.8 s 点击。一次演示为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 在 0.85–1.15 s，持续 0.3 s，使用三次缓入缓出，将宽度从 220 缩小到 36 px，成为圆形；缩小过程的前三分之一内，文字标签渐出。
+//   - 在 1.1–2.3 s，圆形内显示白色旋转加载图标，半径 10、线宽 3、圆弧角度 0.7π，每 0.7 s 旋转一周。
+//   - 在 2.25–2.45 s，颜色从橙色变为绿色 #1E9E5A；白色对勾在 2.25–2.5 s 绘制完成。在 2.45–2.8 s，使用三次缓入缓出，将宽度从 36 扩展至 150 px，对勾向左移动 26 px，并显示“完成”。
+//   - 在 3.9–4.1 s 按钮淡出，原始“发送”按钮在 4.1–4.4 s 向上移动 6 px 并重新出现，使用三次缓出。
+// 适用场景: 适合提交、购买或保存等需要短暂等待结果的按钮。
+// 标签: loading-button, button, spinner, submit, success-state, microinteraction, 按钮, 加载, 提交, 旋转, 完成, 反馈
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#160
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 16
+// 16 ローディングボタン（押すと丸い読み込み表示に縮んで回り、チェック付きの「完了」に変わる）
+CELLS[15] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const CLK = 0.8, BY = 124, BHT = 36;
+  const shr = eIO(P(u, CLK + 0.05, CLK + 0.35)), done = eOut(P(u, 2.25, 2.45)), grow = eIO(P(u, 2.45, 2.8)), fade = P(u, 3.9, 4.1), back = eOut(P(u, 4.1, 4.4));
+  const bw = fade >= 1 ? 220 : grow > 0 ? lerp(BHT, 150, grow) : lerp(220, BHT, shr);
+  const cur = t => path([[0, 430, 205], [0.55, 290, 136], [1.1, 290, 136], [1.6, 440, 205], [4.7, 430, 205]], t);
+  const [cx, cy] = cur(u);
+  view(k, () => {
+    k.fillStyle = C.blueL; k.fillRect(0, 0, VW, VH);
+    k.save(); k.shadowColor = 'rgba(28,35,51,.1)'; k.shadowBlur = 12; k.shadowOffsetY = 3; k.fillStyle = '#fff'; rr(k, 130, 10, 251, 150, 12); k.fill(); k.restore();
+    txt(k, '获取资料', VW / 2, 36, `800 15px ${JP}`, C.ink, 'center');
+    for (let i = 0; i < 2; i++) { k.strokeStyle = '#D5DBE6'; k.lineWidth = 1.5; rr(k, 150, 50 + i * 32, 211, 24, 6); k.stroke(); bars(k, 160, 59 + i * 32, i ? 90 : 120, 1, '#AEB6C5', 6); }
+    const col = fade >= 1 ? '#FF5A2C' : mix('#FF5A2C', GREEN, done), ba = fade >= 1 ? back : 1 - fade;
+    k.save(); k.globalAlpha = ba; k.translate(0, fade >= 1 ? 6 * (1 - back) : 0); k.save(); k.shadowColor = 'rgba(28,35,51,.18)'; k.shadowBlur = 8; k.shadowOffsetY = 3; k.fillStyle = col; rr(k, VW / 2 - bw / 2, BY, bw, BHT, BHT / 2); k.fill(); k.restore();
+    const idleA = fade >= 1 ? 1 : 1 - clamp(shr * 3);
+    if (idleA > 0) { k.save(); k.globalAlpha = idleA * ba; txt(k, '发送', VW / 2, BY + BHT / 2 + 0.5, `800 14px ${JP}`, '#fff', 'center', 'middle'); k.restore(); }
+    if (u > CLK + 0.3 && u < 2.3) { k.save(); k.globalAlpha = clamp((u - CLK - 0.3) / 0.1) * (1 - clamp((u - 2.2) / 0.08)); k.lineCap = 'round'; k.lineWidth = 3; k.strokeStyle = 'rgba(255,255,255,.35)'; k.beginPath(); k.arc(VW / 2, BY + BHT / 2, 10, 0, 7); k.stroke(); const a = u / 0.7 * Math.PI * 2; k.strokeStyle = '#fff'; k.beginPath(); k.arc(VW / 2, BY + BHT / 2, 10, a, a + Math.PI * 0.7); k.stroke(); k.restore(); }
+    if (u >= 2.25 && fade < 1) {
+      k.save();
+      const ox = lerp(0, -26, grow);
+      check(k, VW / 2 + ox, BY + BHT / 2, 16, '#fff', 3, P(u, 2.25, 2.5));
+      if (grow > 0.5) { k.globalAlpha = ba * P(grow, 0.5, 1); txt(k, '完成', VW / 2 + 12, BY + BHT / 2 + 0.5, `800 14px ${JP}`, '#fff', 'center', 'middle'); }
+      k.restore();
+    }
+    k.restore();
+    click(k, cx, cy, u, [CLK]);
+  });
+};

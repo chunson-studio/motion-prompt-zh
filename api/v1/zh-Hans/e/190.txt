@@ -1,0 +1,35 @@
+// Motion Prompt #190 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#190
+//
+// 交叉剪辑 / Cross-cutting
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 22 · 子类别: 转场与剪辑
+// 示例表现: 奔跑者与汽车两个同时发生的场景交替出现，每个镜头越来越短。
+// 动画参数与实现规则:
+//   - 两个场景共用同一时钟：A 为奔跑者，位于左侧 0.3 m，纵深从 15 m→4.5 m，腿部运动相位为 u×12；B 为城市中的汽车，位于右侧 1 m，纵深从 17 m→4.5 m。二者均在 4.7 s 内接近相机。
+//   - 剪切：在 0 / 1.1 / 2.0 / 2.7 / 3.3 / 3.8 / 4.2 / 4.5 s 直接切换 A 与 B；镜头时长依次从 1.1→0.9→0.7→0.6→0.5→0.4→0.3 s 缩短，以增强紧张感。
+//   - 当另一场景出现在屏幕上时，本场景仍继续运行；再次切回时，主体已向前移动。
+//   - 相机：A 固定在高度 1.3 m，前景有四根立柱；B 固定在高度 1.6 m，俯仰角 +0.06 rad，画面中有城市和太阳。
+//   - 底部时间条：灰色 A 与蓝色 B 交替，共八段，并带播放头；最后 0.3 s 交叉淡化回 A 的起始状态。
+//   - 右上角读数显示“SCENE A”或“SCENE B”。
+// 适用场景: 适合追逐、救援等同时发生的事件，通过交替剪辑建立紧张感。
+// 标签: cross-cutting, parallel editing, intercut, parallel action, chase, edit, 交叉剪辑, 平行场景, 追逐, 紧张, 节奏, 剪辑
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#190
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 22
+// 22 クロスカッティング: 同時に進む2つの場面（走る人物・走る車）を、だんだん短く交互に見せる
+const XC = [0, 1.1, 2.0, 2.7, 3.3, 3.8, 4.2, 4.5, CYC];
+CELLS[21] = shot((k, w, h, u) => {
+  const r = P(u, CYC - 0.3, CYC);
+  const runA = (kk, t) => world(kk, w, h, cam({ y: 1.3 }), { person: { x: -0.3, z: lerp(15, 4.5, t / CYC), walk: t * 12 }, fg: [[-2.2, 3.5], [-2.2, 6.5], [-2.2, 9.5], [-2.2, 12.5]] });
+  const carB = (kk, t) => world(kk, w, h, cam({ y: 1.6, pitch: 0.06 }), { city: true, mountains: false, trees: false, sun: [-26, 40, 150], extra: [[1.0, 0, lerp(17, 4.5, t / CYC), CAR[3]]] });
+  let i = 0; while (u >= XC[i + 1]) i++;
+  const isA = i % 2 === 0;
+  blend(k, kk => (isA ? runA : carB)(kk, u), kk => runA(kk, 0), eIOs(r));   // 最後の0.3秒で A の開始状態へ戻す
+  const segs = []; for (let j = 0; j < XC.length - 1; j++) segs.push([XC[j], XC[j + 1], j % 2 ? 'B' : 'A', j % 2 ? C.blue : C.g2]);
+  strip(k, w, h, segs, u);
+  return r > .5 || isA ? 'SCENE A' : 'SCENE B';
+});

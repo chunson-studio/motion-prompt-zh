@@ -1,0 +1,45 @@
+// Motion Prompt #105 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#105
+//
+// 散景 / Bokeh
+// 分类: photo (摄影效果、光线与风格) · element 09 · 子类别: 镜头与相机效果
+// 示例表现: 光圈逐渐打开时，合焦的人物保持清晰，后方建筑变柔和，路灯与远处灯光扩散成大而浅的光斑。
+// 动画参数与实现规则:
+//   - 场景 2：街角中，建筑、树木和路灯（x 114、292、494）位于 y 132–162 的道路后方；人物站在左前方，脚底位于 x 176、y 200，身高 124 px。背景变暗，天空为 #E7E5E1。
+//   - 背景模糊：人物以外的所有内容，模糊半径从 0 → 6 px。
+//   - 灯光：三盏路灯的大小系数为 1.25，另有 12 个光点，相隔 45 px；y 范围为 44–114，大小系数为 0.6–1.2，使用固定随机种子。光斑半径 = (2.4 + 15 × effect) × size。
+//   - 光斑不透明度从 100% → 55%；路灯为琥珀色 #FFC75A，远处光点为 #FFE3A3，带粗 1.2 px 的琥珀色边缘。
+//   - 人物保持清晰；右上角光圈从 f/16 → f/1.4，共 8 挡。
+//   - 时序：效果在 0.4 s 至 1.4 s 进入，保持到 4.0 s，并在 4.8 s 前完全消失；单次周期 = 5 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+// 适用场景: 适合突出人物或产品，使其与背景分离，并增加柔和、富有节庆感的夜景氛围。
+// 标签: bokeh, shallow depth of field, background blur, wide aperture, f/1.4, out of focus, lights, 散景, 光圈, 背景虚化, 光斑, 主体突出, 夜景
+// 尺寸: 539x208 px · 周期: 5 s
+// 依赖: kit photo -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/photo.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#105
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 09
+// ボケ: 絞りを開けると、人物はくっきりのまま、背景の灯りが大きな丸になってにじむ
+CELLS[8] = cell((k, u) => {
+  const a = env(u), p = pal(BASE, DIM, a);
+  const [B, kb] = layer('bokeh'); stageStreet(kb, p, { person: false });
+  const [Bb, kbb] = layer('bokeh-b'); kbb.filter = `blur(${(6 * a).toFixed(2)}px)`; kbb.drawImage(B, 0, 0); kbb.filter = 'none';
+  k.drawImage(B, 0, 0); k.drawImage(Bb, 0, 0);
+  // 灯り: 街灯3つと、窓や遠くの灯り12個（横に45pxおき・高さと大きさは固定シード）。絞りを開くほど丸が大きく薄くなる
+  const pts = once('bokeh-pts', () => {
+    const o = LAMPS.map(x => [x + 9, ROAD - 53, 1.25, 0]), r = rng(9);
+    for (let i = 0; i < 12; i++) o.push([22 + i * 45 + r() * 20, 44 + r() * 70, 0.6 + r() * 0.6, 1]);
+    return o;
+  });
+  k.save();
+  for (const [x, y, s, w] of pts) {
+    const r = (2.4 + 15 * a) * s;
+    k.globalAlpha = lerp(1, 0.55, a); k.fillStyle = w ? BASE.glow : BASE.lit; k.beginPath(); k.arc(x, y, r, 0, TAU); k.fill();
+    k.globalAlpha = 0.7 * a; k.strokeStyle = BASE.lit; k.lineWidth = 1.2; k.stroke();
+  }
+  k.restore();
+  figure(pen(k), FIG[0], FIG[1], FIG[2], p.person);
+  const stops = ['f/16', 'f/11', 'f/8', 'f/5.6', 'f/4', 'f/2.8', 'f/2', 'f/1.4'];
+  hud(k, stops[Math.round(a * 7)]);
+});

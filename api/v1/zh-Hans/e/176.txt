@@ -1,0 +1,34 @@
+// Motion Prompt #176 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#176
+//
+// 穿越镜头 / Fly-through
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 08 · 子类别: 镜头运动
+// 示例表现: 相机飞向一面带窗户的墙，穿过窗口，进入墙后方的空间。
+// 动画参数与实现规则:
+//   - 相机：向前移动 0 m→12.5 m，高度 1.3 m，朝向固定；前方 8 m 有一面带窗户的墙，相机从窗口穿过。
+//   - 时序：0.5–3.6 s，持续 3.1 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+//   - 墙体：浅灰色平面，宽 80 m、高 14 m，窗口宽 2.4 m、高 2.2 m，窗台高 0.15 m。透过窗口可见人物，位于右侧 0.3 m、前方 14.5 m，以及树木、建筑和山脉。
+//   - 穿过：墙体距相机前方 0.25 m 时停止绘制；此时窗框已超出画面，投影半宽约为 1580 px，因此墙体消失不可见。
+//   - 穿过后，墙后的空间填满画面，相机接近至距人物 2 m。#035 FPV 无人机镜头则会持续在树木间穿行。
+//   - 返回：在 3.6–4.2 s 保持静止，再在最后 0.5 s 交叉淡化回起始状态。右上角读数显示与窗口的距离：“距窗 8.0m”→“已穿过”，分别表示与窗口的距离和已穿过的状态。
+// 适用场景: 适合以进入建筑作为开场，或用一次连续运镜从一个场所穿行到另一个场所。
+// 标签: fly-through, flythrough, through the window, pass through, drone, interior, camera move, 镜头, 穿越, 飞行, 窗口, 建筑, 连续
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#176
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 08
+// 08 フライスルー: 壁の窓へ向かって飛び、通り抜けて向こうの場所へ出る（#035 FPV は木の間を抜けていく）
+CELLS[7] = shot(camCell((k, w, h, p) => {
+  const z = lerp(0, 12.5, p), WZ = 8;
+  world(k, w, h, cam({ z, y: 1.3 }), {
+    buildings: true, person: { x: 0.3, z: 14.5 },
+    extra: [[0, 0, WZ, (kk, s) => {   // 窓のあいた壁（偶奇塗り）
+      kk.fillStyle = C.g1; kk.beginPath(); kk.rect(-40, 0, 80, 14); kk.rect(-1.2, 0.15, 2.4, 2.2); kk.fill('evenodd');
+      kk.strokeStyle = C.g3; kk.lineWidth = 1.6 / s; kk.strokeRect(-1.2, 0.15, 2.4, 2.2);
+      kk.strokeStyle = C.g2; kk.lineWidth = 1.2 / s; kk.beginPath(); kk.moveTo(-40, 14); kk.lineTo(40, 14); kk.stroke();
+    }]]
+  });
+}, p => { const d = 8 - lerp(0, 12.5, p); return d > 0 ? `距窗 ${d.toFixed(1)}m` : '已穿过'; }, 0.5, 3.6));

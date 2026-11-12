@@ -1,0 +1,31 @@
+// Motion Prompt #137 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#137
+//
+// 推入转场 / Push transition
+// 分类: motion2 (动态图形（第 2 弹）) · element 17 · 子类别: 转场与强调
+// 示例表现: 下一个场景从侧面滑入，同时将当前场景推出画面。
+// 动画参数与实现规则:
+//   - 海景→山景→海景，每段 2.35 s。每半周期的 0.45–1.6 s 执行转场，持续 1.15 s，使用三次缓入缓出。
+//   - 两个场景边缘始终相接，并一起移动完整画面宽度 539 px；不重叠，也不淡化。
+//   - 方向：海景→山景时向左移动，下一个场景从右侧进入；山景→海景时向右移动。
+//   - 两个场景的接缝处绘制一条宽度为 6 的藏青色线。
+// 适用场景: 适合依次展示幻灯片、照片或操作步骤，让切换呈现连续向前推进的感觉。
+// 标签: push, push-transition, slide, transition, scene-change, carousel, 推入, 转场, 滑动, 幻灯片, 连续, 横向
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#137
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 17
+// 17 プッシュ（次の画面が横から入ってきて、前の画面を一緒に押し出す）
+const SC17 = [scSea, scMtn];
+CELLS[16] = abCell((k, w, h, u, a, b) => {
+  const p = eIO(P(u, TA - 0.05, TB + 0.1)), dir = a === 0 ? -1 : 1;
+  if (p <= 0) return SC17[a](k, w, h);
+  if (p >= 1) return SC17[b](k, w, h);
+  k.save(); k.translate(dir * p * w, 0); SC17[a](k, w, h); k.restore();
+  k.save(); k.translate(dir * (p - 1) * w, 0); SC17[b](k, w, h); k.restore();
+  const ex = dir < 0 ? w * (1 - p) : w * p;
+  k.fillStyle = C.navy; k.fillRect(ex - 3, 0, 6, h);
+});

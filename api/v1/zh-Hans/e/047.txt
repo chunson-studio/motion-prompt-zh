@@ -1,0 +1,24 @@
+// Motion Prompt #047 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#047
+//
+// J 型剪辑 / J-cut
+// 分类: camera (镜头运动与转场) · element 23 · 子类别: 转场
+// 示例表现: 下一个场景的声音先于画面开始；上方显示画面，下方以视频和音频时间轴展示错开的切换点。
+// 动画参数与实现规则:
+//   - 衔接：画面直接剪切，只有音频先于画面切换到下一场景 B。错开量为时间轴的 20%，即 0.72 s。
+//   - 播放头：在 3.6 s 内从左向右匀速移动，时段为 0.4–4.0 s；音频在 35% 处切换，约 1.66 s，画面在 55% 处切换，约 2.38 s。
+//   - 错开区间为 35–55%，此时画面仍是 A，声音已是 B；该区间以浅蓝色带和两条蓝色虚线标示。
+//   - 布局：上方 134 px 显示画面，相机固定、主体不动；下方 74 px 显示视频和音频两行时间轴，A 为灰色、B 为浅蓝色，音频行带有波形。
+//   - 标签：画面左下角显示“画面A / 画面B”；右下角显示当前播放的音轨，从灰色“♪ A音轨”切换为蓝色“♪ B音轨”。
+//   - 返回：最后 0.5 s 交叉淡化回起始状态，一次演示为 4.7 s。
+// 适用场景: 适合提前建立对下一场景的期待，或让场景及讲话者的切换更加自然。
+// 标签: j-cut, j cut, split edit, audio lead, sound first, audio transition, edit, j型剪辑, 音频先行, 声音, 时间轴, 转场, 预期
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#047
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 23
+// 23 Jカット: 音が先に次の場面（B）へ切り替わり、映像が後から追う
+CELLS[22] = shot(splitCell(0.2), 134);

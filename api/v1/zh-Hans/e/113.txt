@@ -1,0 +1,31 @@
+// Motion Prompt #113 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#113
+//
+// 高调 / High-key
+// 分类: photo (摄影效果、光线与风格) · element 17 · 子类别: 色调与后期风格
+// 示例表现: 景观与人物变为接近白色的浅色调，阴影非常淡，右下角直方图的峰值向右端移动。
+// 动画参数与实现规则:
+//   - 场景 3：左侧为半身像，头部圆心 x 140、y 82，半径 28 px；右侧为山丘、房屋、树木和太阳，太阳位于 x 432、y 54，半径 15 px。
+//   - 颜色：天空 #FAF9F7 → #FFFFFF，山丘 #EAEDF1 → #F5F6F8，人物 #4D5A75 → #B9C0CE，阴影 #33405A → #A6AEBF，太阳 #F5A524 → #FFD889。
+//   - 直方图尺寸为 96×46 px，共 20 根柱；峰值中心从 0.56 → 0.85，分布宽度从 0.2 → 0.09。
+//   - 时序：效果在 0.4 s 至 1.4 s 进入，保持到 4.0 s，并在 4.8 s 前完全消失；单次周期 = 5 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+// 适用场景: 适合干净、明亮、柔和的产品照与人像。
+// 标签: high-key, high key, bright, white background, airy, low contrast, 高调, 明亮, 浅色, 柔和, 直方图, 产品摄影
+// 尺寸: 539x208 px · 周期: 5 s
+// 依赖: kit photo -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/photo.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#113
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 17
+// ハイキー: 明るい色だけになり、影はごく薄く、明るさの山が右端へ寄る
+CELLS[16] = cell((k, u) => {
+  const a = env(u);
+  const HIGH = {
+    sky: '#FFFFFF', sky2: '#FFFFFF', far: '#F5F6F8', mid: '#EEF0F3', ground: '#FBFBFA', ground2: '#F3F3F1', mark: '#FFFFFF', cast: '#F3F3F1',
+    bld: '#FBFBFA', edge: '#E9E9E7', win: '#F2F2F0', winOff: '#F2F2F0', tree: '#F0F0EE', trunk: '#E5E5E3', post: '#DADAD8', bulb: '#E5E5E3',
+    person: '#B9C0CE', shade: '#A6AEBF', lit: '#FFE6AE', car: '#E4E7EC', glass: '#FFFFFF', tire: '#C5CAD3', sun: '#FFD889', glow: '#FFF3D8'
+  };
+  stageLand(k, pal(BASE, HIGH, a));
+  histo(k, lerp(0.56, 0.85, a), lerp(0.2, 0.09, a));
+});

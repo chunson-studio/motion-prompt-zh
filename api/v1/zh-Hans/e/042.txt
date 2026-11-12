@@ -1,0 +1,44 @@
+// Motion Prompt #042 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#042
+//
+// 匹配剪辑 / Match cut
+// 分类: camera (镜头运动与转场) · element 18 · 子类别: 转场
+// 示例表现: 抛出的球在下一镜头中变成位置和尺寸相同的太阳，通过匹配形状连接两个不同场景。
+// 动画参数与实现规则:
+//   - 衔接：在 2.3 s 直接剪切，过渡为 0 帧；切换前后的蓝色圆形位置相同，位于画面中心右侧 120 px、上方 46 px，半径均为 17 px。
+//   - 前一镜头为 0–2.3 s：相机固定，高度 1.4 m；人物位于左侧 1.2 m、前方 7 m，从 0.5 s 开始抛球，使用三次缓出，约等于 cubic-bezier(0.33,1,0.68,1)。
+//   - 球：从人物头顶上方、高度 2.3 m 处飞向匹配点；半径从 5 px→17 px，轨迹为最多向上拱起 30 px 的弧线。
+//   - 后一镜头为 2.3–4.7 s：切至没有建筑的另一地点，相机高度 1.2 m；同一位置的蓝色圆形成为太阳，并在 2.4 s 内下沉 14 px。
+//   - 标记：在剪切前后各 0.7 s 的范围内，一圈半径 26 px 的蓝色虚线圆淡入、淡出。
+//   - 右上角读数显示“SHOT 1”→“SHOT 2”；在 4.7 s 直接切回 SHOT 1。
+// 适用场景: 适合通过相同形状或运动，连接在时间或空间上相距较远的两个场景。
+// 标签: match cut, graphic match, shape match, cut, transition, edit, 匹配剪辑, 形状, 衔接, 转场, 视觉关联, 剪辑
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#042
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 18
+// 18 マッチカット（投げたボール → 同じ位置・大きさの太陽）
+CELLS[17] = shot((k, w, h, u) => {
+  const cut = 2.3;
+  const BX = 120, BY = -46, BR = 17;
+  if (u < cut) {
+    const q = eOut(P(u, 0.5, cut));
+    world(k, w, h, cam({ y: 1.4 }), {
+      person: { x: -1.2, z: 7, armUp: q > 0.05 }, sun: null,
+      after: (kk, cc) => { const s = proj(cc, -1.2, 2.3, 7); const x = lerp(s.x, BX, q), y = lerp(s.y, BY, q) - Math.sin(q * Math.PI) * 30, r = lerp(5, BR, q); kk.fillStyle = C.blue; kk.beginPath(); kk.arc(x, y, r, 0, 7); kk.fill(); }
+    });
+  } else {
+    const q = P(u, cut, CYC);
+    world(k, w, h, cam({ y: 1.2 }), {
+      buildings: false, sun: null, trees: true,
+      after: (kk) => { kk.fillStyle = C.blue; kk.beginPath(); kk.arc(BX, BY + q * 14, BR, 0, 7); kk.fill(); }
+    });
+  }
+  // 形がそろっていることを示す点線の円
+  const g = Math.max(0, 1 - Math.abs(u - cut) / 0.7);
+  if (g > 0) { k.save(); k.translate(w / 2, h / 2); k.globalAlpha = g; k.strokeStyle = C.blue; k.lineWidth = 2; k.setLineDash([5, 4]); k.beginPath(); k.arc(BX, BY + (u > cut ? P(u, cut, CYC) * 14 : 0), BR + 9, 0, 7); k.stroke(); k.restore(); }
+  return u < cut ? 'SHOT 1' : 'SHOT 2';
+});

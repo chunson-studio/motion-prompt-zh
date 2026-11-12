@@ -1,0 +1,44 @@
+// Motion Prompt #146 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#146
+//
+// 滚动文字显现 / Scroll text reveal
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 02 · 子类别: 滚动效果
+// 示例表现: 页面滚动时，浅灰色标题从左上方开始逐字加深；向上滚动时，从末尾逐字变淡。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168。滚动进度 p 在 0.3–2.6 s 从 0→1，在 3.2–4.4 s 从 1→0，使用三次缓入缓出。页面向上移动 p × 40 px。一次往返为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 标题分为三行，共 24 个字符，字号 27 px、字重 800、行高 38 px，初始均为浅灰色 #D6DBE4。
+//   - 第 n 个字符从 0 开始计数，其加深程度为 clamp(p × 26 − n)：每个字符经过总进度的 1/26 即完全变为正文颜色 #1C2333，与滚动同步。
+//   - 向上滚动时，按相同公式从最后一个字符开始淡出。表示正文的横条和滚动条滑块随页面移动。
+// 适用场景: 适合希望读者放慢速度阅读的简短宣言，例如品牌理念或创始人寄语。
+// 标签: scroll, text-reveal, scroll-driven, typography, opacity, storytelling, 滚动, 文字, 逐字, 显现, 标题, 阅读
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#146
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 02
+// 02 スクロールテキストリビール（薄い見出しの文字が、スクロールに合わせて左から1文字ずつ濃くなる）
+CELLS[1] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const p = steps([[0.3, 0], [2.6, 1], [3.2, 1], [4.4, 0]], u), y = p * 40;
+  const LINES = ['每天的一点小小巧思，', '让生活在不知不觉', '中逐渐改变。'], F = `800 27px ${JP}`;
+  const total = LINES.join('').length;
+  view(k, () => {
+    k.save(); k.translate(0, -y);
+    txt(k, 'ABOUT US', 40, 34, `800 11px ${EN}`, C.acc, 'left', 'alphabetic', '2px');
+    let n = 0;
+    LINES.forEach((s, li) => {
+      let x = 40; k.font = F;
+      for (const ch of s) {
+        const f = clamp(p * (total + 2) - n);
+        txt(k, ch, x, 72 + li * 38, F, mix('#D6DBE4', C.ink, f));
+        k.font = F; x += k.measureText(ch).width; n++;
+      }
+    });
+    bars(k, 40, 168, 300, 3, C.faint, 6, 12, 0.7);
+    k.restore();
+    sbar(k, p, 0.55);
+  });
+};

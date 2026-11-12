@@ -1,0 +1,28 @@
+// Motion Prompt #187 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#187
+//
+// 淡出到黑场 / Fade to black
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 19 · 子类别: 转场与剪辑
+// 示例表现: 整个画面逐渐变暗至黑场，然后下一个场景从黑场中渐渐亮起。
+// 动画参数与实现规则:
+//   - 淡出：在 1.4–2.6 s，持续 1.2 s，将黑色 rgb(20,20,24) 覆盖到离场画面上，不透明度从 0→100%，使用二次缓入缓出，约等于 cubic-bezier(0.45,0,0.55,1)。
+//   - 黑场：2.6–3.1 s 完全为黑色；在 2.9 s 通过直接剪切换入下一画面，由于黑场遮挡，切换不可见。
+//   - 淡入：在 3.1–4.3 s，持续 1.2 s，黑色遮罩从 100%→0，使用相同缓动。
+//   - 相机：两幅画面中均保持固定；A 的高度为 1.4 m，B 的高度为 1.6 m、俯仰角 +0.1 rad；主体也保持不动。
+//   - 每 4.7 s 交替执行 A→B 和 B→A，完整往返为 9.4 s。右上角读数显示“FADE OUT”或“FADE IN”；取景器标记始终显示在黑场上方。
+// 适用场景: 适合章节分隔、较长时间的流逝，或故事结尾。
+// 标签: fade to black, fade out, fade in, black, ending, transition, 淡出, 黑场, 淡入, 转场, 章节, 结尾
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#187
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 19
+// 19 フェードアウト: 画面全体が黒へ沈んで終わり、黒から次の場面が明けてくる
+CELLS[18] = shot(abCell((k, w, h, u, A, B) => {
+  const out = eIOs(P(u, 1.4, 2.6)), inn = eIOs(P(u, 3.1, 4.3));
+  if (u < 2.9) A(k, w, h); else B(k, w, h);
+  const a = u < 2.9 ? out : 1 - inn;
+  if (a > 0) { k.fillStyle = `rgba(20,20,24,${a.toFixed(3)})`; k.fillRect(0, 0, w, h); }
+}, u => u < 2.9 ? 'FADE OUT' : 'FADE IN'));

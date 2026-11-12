@@ -1,0 +1,47 @@
+// Motion Prompt #093 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#093
+//
+// 平滑滚动 / Smooth scroll
+// 分类: lp (落地页与网页效果) · element 21 · 子类别: 加载、导航与循环动效
+// 示例表现: 点击菜单中的“价格”，页面平滑滚动到价格区块；点击右下角上箭头，页面平滑返回顶部。
+// 动画参数与实现规则:
+//   - 在 0.9 s 点击“价格”菜单项；滚动位置在 0.95–2.0 s 从 0→296 px，持续 1.05 s，使用三次缓入缓出。
+//   - 停止位置 = 价格区块顶部位置 330 px − 固定页头高度 34 px。
+//   - 滚动距离超过 60 px 后，右下角半径 15 的圆形返回顶部按钮，在接下来的 40 px 滚动范围内逐渐出现。
+//   - 在 3.1 s 点击该按钮；滚动位置在 3.15–4.2 s 从 296→0，使用三次缓入缓出。
+//   - 价格区块位于视口内时，菜单中的“价格”变为橙色。
+// 适用场景: 适合同一页面内的菜单或目录跳转，让读者看清页面移动的方向和目的地。
+// 标签: smooth-scroll, scroll-behavior, anchor-link, in-page-link, back-to-top, navigation, 平滑滚动, 锚点, 目录, 返回顶部, 页内跳转, 导航
+// 尺寸: 539x208 px · 周期: 4.8 s
+// 依赖: kit lp -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#093
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 21
+// 21 スムーススクロール（メニューを押すと、ページがなめらかに目的の場所まで動く）
+CELLS[20] = (k, w, h, u) => {
+  frame(k);
+  const TO = 296;   // 「料金」セクションの頭（330）− ヘッダーの高さ（34）
+  const y = TO * eIO(P(u, 0.95, 2.0)) * (1 - eIO(P(u, 3.15, 4.2)));
+  const [cx, cy] = path([[0, 380, 132], [0.75, 360, 18], [1.0, 360, 18], [2.9, 478, 140], [3.25, 478, 140], [4.8, 380, 132]], u);
+  view(k, () => {
+    k.save(); k.translate(0, -y);
+    pic(k, 24, 46, 222, 110, 0, 8); txt(k, '找到合适的工具。', 264, 84, `800 19px ${JP}`, C.ink); bars(k, 264, 98, 210, 3);
+    k.fillStyle = C.soft; k.fillRect(0, 170, VW, 160);
+    txt(k, '特色', VW / 2, 206, `800 17px ${JP}`, C.ink, 'center');
+    for (let i = 0; i < 3; i++) { const x = 100 + i * 155; k.fillStyle = C.blueL; k.beginPath(); k.arc(x, 252, 24, 0, 7); k.fill(); bars(k, x - 46, 288, 92, 2); }
+    txt(k, '价格', VW / 2, 370, `800 17px ${JP}`, C.ink, 'center');
+    ['¥0', '¥980', '¥2,980'].forEach((s, i) => {
+      const x = 50 + i * 143, hi = i === 1; k.fillStyle = '#fff'; rr(k, x, 388, 125, 96, 8); k.fill();
+      k.lineWidth = hi ? 2.5 : 1.5; k.strokeStyle = hi ? C.acc : C.faint; k.stroke();
+      txt(k, s, x + 62.5, 428, `800 20px ${EN}`, hi ? C.acc : C.ink, 'center'); bars(k, x + 22, 444, 81, 2);
+    });
+    k.restore();
+    header(k, 0, y > 250 ? 1 : -1);
+    const tb = clamp((y - 60) / 40);   // ページトップへ戻るボタン
+    if (tb > 0) { k.globalAlpha = tb; k.fillStyle = C.ink; k.beginPath(); k.arc(478, 140, 15, 0, 7); k.fill(); k.strokeStyle = '#fff'; k.lineWidth = 2.4; k.lineCap = 'round'; k.lineJoin = 'round'; k.beginPath(); k.moveTo(472, 143); k.lineTo(478, 136.5); k.lineTo(484, 143); k.stroke(); k.globalAlpha = 1; }
+    sbar(k, y / TO * 0.7, 0.36);
+    click(k, cx, cy, u, [0.9, 3.1]);
+  });
+};

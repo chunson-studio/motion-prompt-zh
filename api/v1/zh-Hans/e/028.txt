@@ -1,0 +1,25 @@
+// Motion Prompt #028 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#028
+//
+// 变焦推近 / Zoom in
+// 分类: camera (镜头运动与转场) · element 04 · 子类别: 镜头运动
+// 示例表现: 相机不移动，只增加焦距，因此整个画面按相同比例放大。
+// 动画参数与实现规则:
+//   - 相机：位置和朝向固定，高度 1.5 m；只改变焦距，从 330 px→1200 px，标示为 24mm→87mm，约 3.6×。
+//   - 指数插值：f = 330 × (8/2.2)^p，其中 p 在 0.5–3.4 s 使用三次缓入缓出，持续 2.9 s。
+//   - 主体：人物静立在前方 8 m；最终尺寸与本组第 03 项推镜头一致，约为原来的 3.6×。
+//   - 没有视差：前景立柱和石头、人物、建筑和山脉都按相同比例放大，遮挡关系不变。
+//   - 返回：在 3.4–4.2 s 保持静止，再在最后 0.5 s 交叉淡化回起始状态，一次演示为 4.7 s。
+//   - 右上角读数以 mm 显示焦距：24mm→87mm。
+// 适用场景: 适合不移动相机就将注意力集中到某一点；与推镜头相比，画面更平面化，也更像从远处观察。
+// 标签: zoom, zoom in, focal length, lens, magnify, telephoto, camera move, 镜头, 变焦, 推近, 焦距, 放大, 观察
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#028
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 04
+// 04 ズームイン: 位置は固定・焦点距離だけ伸びる（全体が同じ比率で拡大）
+CELLS[3] = shot(camCell((k, w, h, p) => world(k, w, h, cam({ f: F0 * Math.pow(8 / 2.2, p) }), { person: { z: 8 }, fg: [[-1.5, 3.6], [1.6, 4.8, 'rock']] }),
+  p => mm(F0 * Math.pow(8 / 2.2, p))));

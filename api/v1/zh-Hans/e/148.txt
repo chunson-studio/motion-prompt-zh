@@ -1,0 +1,52 @@
+// Motion Prompt #148 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#148
+//
+// 滚动切换背景色 / Background color change on scroll
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 04 · 子类别: 滚动效果
+// 示例表现: 滚动进入新的区块时，整页背景从奶油色渐变为藏青色，再变为浅蓝色；深色背景上的文字会变为白色。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168，包含三个区块，每个区块高 168 px，即一屏。滚动距离在 0.3–1.2 s 从 0→168 px，在 1.8–2.7 s 从 168→336，在 3.3–4.4 s 从 336→0，使用三次缓入缓出。一次往返为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 背景依次为晨间 #FFEBD9→夜间 #1E2A4A→假日 #DDE6FF。整页后方绘制统一背景色，跨越区块边界时在颜色之间混合。
+//   - 从当前区块滚向下一区块的进度达到 5% 至 95% 时，混合比例从 0→1，使用二次缓入缓出；变化由滚动位置驱动，而非时间驱动。
+//   - 进入夜间区块时，标题由藏青色渐变为白色，正文横条由米色渐变为蓝灰色；“01 MORNING …”等区块标签始终保持橙色。
+//   - 各区块的图像，包括太阳、月亮与星星、山景照片，随页面移动。滚动条滑块随滚动位置变化。
+// 适用场景: 适合各章节氛围不同的叙事型网页，也适合日夜、季节等场景对比。
+// 标签: background-color, scroll, section, color-transition, scroll-driven, storytelling, 滚动, 背景色, 渐变, 章节, 氛围, 叙事
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#148
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 04
+// 04 背景色の切り替え（スクロールでセクションが変わるたび、ページ全体の背景色がなめらかに変わる）
+CELLS[3] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const y = steps([[0.3, 0], [1.2, VH], [1.8, VH], [2.7, 2 * VH], [3.3, 2 * VH], [4.4, 0]], u), s = y / VH;
+  const BG = ['#FFEBD9', '#1E2A4A', '#DDE6FF'], DK = [0, 1, 0];
+  const i0 = Math.min(1, Math.floor(s)), t = eIOs(clamp((s - i0 - 0.05) / 0.9));
+  const bg = mix(BG[i0], BG[i0 + 1], t), dk = lerp(DK[i0], DK[i0 + 1], t);
+  const fg = mix(C.ink, '#FFFFFF', dk), bc = mix('#E3C9B4', '#45507A', dk);
+  view(k, () => {
+    k.fillStyle = bg; k.fillRect(0, 0, VW, VH);
+    k.save(); k.translate(0, -y);
+    const S = [['01  MORNING', '晨间时光'], ['02  NIGHT', '夜晚小憩'], ['03  HOLIDAY', '假日出游']];
+    S.forEach(([no, ttl], i) => {
+      const y0 = i * VH;
+      txt(k, no, 40, y0 + 58, `800 12px ${EN}`, C.acc, 'left', 'alphabetic', '2px');
+      txt(k, ttl, 40, y0 + 92, `800 24px ${JP}`, fg);
+      k.fillStyle = bc; for (let j = 0; j < 2; j++) { rr(k, 40, y0 + 108 + j * 12, j ? 110 : 180, 6, 3); k.fill(); }
+    });
+    // 朝: 太陽 / 夜: 月と星 / 休日: 山の写真
+    k.fillStyle = C.acc; k.beginPath(); k.arc(380, 84, 34, 0, 7); k.fill();
+    k.strokeStyle = C.acc; k.lineWidth = 4; k.lineCap = 'round';
+    for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4; k.beginPath(); k.moveTo(380 + Math.cos(a) * 44, 84 + Math.sin(a) * 44); k.lineTo(380 + Math.cos(a) * 54, 84 + Math.sin(a) * 54); k.stroke(); }
+    k.fillStyle = '#FFE5DB'; k.beginPath(); k.arc(380, VH + 84, 36, 0, 7); k.fill();
+    k.fillStyle = bg; k.beginPath(); k.arc(396, VH + 72, 32, 0, 7); k.fill();
+    k.fillStyle = '#FFE5DB';[[300, 50], [450, 40], [330, 130], [470, 120]].forEach(([a, b]) => { k.beginPath(); k.arc(a, VH + b, 2.5, 0, 7); k.fill(); });
+    pic(k, 300, 2 * VH + 28, 180, 112, 0, 10);
+    k.restore();
+    sbar(k, s / 2, 0.34);
+  });
+};

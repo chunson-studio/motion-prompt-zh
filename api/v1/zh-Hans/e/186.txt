@@ -1,0 +1,37 @@
+// Motion Prompt #186 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#186
+//
+// 变形剪切 / Morph cut
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 18 · 子类别: 转场与剪辑
+// 示例表现: 通过平滑插值人物的位置和姿态，连接同一个人的两次拍摄，让衔接不像跳切那样突然。
+// 动画参数与实现规则:
+//   - 第 1 次拍摄为 0–2.0 s：相机固定，高度 1.45 m；人物位于左侧 0.4 m、前方 3.3 m，四肢角度 -0.45 rad。第 2 次拍摄从 2.45 s 开始：人物位于右侧 0.35 m，四肢角度 +0.55 rad。两次拍摄中都叠加 0.12·sin(t×3) rad 的轻微摆动。
+//   - 变形衔接发生在 2.0–2.45 s，持续 0.45 s：人物位置采用二次缓入缓出插值，约等于 cubic-bezier(0.45,0,0.55,1)；在相同的插值位置绘制两种姿态，并进行交叉淡化。
+//   - 仅在变形过程中，对整帧应用 sin(q×π)×2.2 px 的模糊，使衔接更柔和；#041 跳切则保留位置的突然变化。
+//   - 底部时间条：灰色的第 1 次拍摄、狭窄蓝色的变形段、灰色的第 2 次拍摄，并带播放头。
+//   - 返回：最后 0.5 s 交叉淡化回第 1 次拍摄的起始状态；右上角读数依次为“TAKE 1”→“MORPH”→“TAKE 2”。
+// 适用场景: 适合精简采访或旁白，或不露痕迹地删去口误。
+// 标签: morph cut, morph, seamless, interview, talking head, edit, transition, 变形剪切, 剪辑, 插值, 采访, 衔接, 姿态
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#186
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 18
+// 18 モーフカット: 同じ人物の2テイクを、位置と姿勢をなめらかに補間してつなぐ（#041 ジャンプカットは飛ぶ）
+CELLS[17] = shot((k, w, h, u) => {
+  const T0 = 2.0, T1 = 2.45, r = P(u, CYC - RESET, CYC);
+  const draw = (kk, t) => {
+    const q = eIOs(P(t, T0, T1));
+    // テイク1とテイク2は姿勢が違う。モーフ中は同じ（補間した）位置に2つの姿勢を重ねて溶かす
+    const pose = (k2, m) => world(k2, w, h, cam({ y: 1.45, z: 0 }), { person: { x: lerp(-0.4, 0.35, q), z: 3.3, walk: (m ? 0.55 : -0.45) + 0.12 * Math.sin(t * 3) }, trees: true, buildings: true });
+    const bl = Math.sin(q * Math.PI) * 2.2;
+    kk.save(); kk.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : 'none';
+    blend(kk, k2 => pose(k2, false), k2 => pose(k2, true), q);
+    kk.restore();
+    strip(kk, w, h, [[0, T0, '拍摄1', C.g2], [T0, T1, '', C.blue], [T1, CYC, '拍摄2', C.g2]], t);
+  };
+  blend(k, kk => draw(kk, u), kk => draw(kk, 0), eIOs(r));
+  return r > .5 || u < T0 ? 'TAKE 1' : u < T1 ? 'MORPH' : 'TAKE 2';
+});

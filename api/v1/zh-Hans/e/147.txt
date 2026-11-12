@@ -1,0 +1,45 @@
+// Motion Prompt #147 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#147
+//
+// 堆叠卡片 / Stacking cards
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 03 · 子类别: 滚动效果
+// 示例表现: 滚动时，下一张卡片从下方升起，略微错位地叠在上一张之上；下方卡片会稍微缩小并变暗。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168。滚动步进 s 在 0.3–1.1 s 从 0→1，在 1.6–2.4 s 从 1→2，在 3.2–4.4 s 从 2→0，使用三次缓入缓出。一次往返为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 三张卡片各为 371 × 124，圆角半径 12，水平居中；在页面上相隔 170 px。s 每增加一档，卡片向上移动 170 px。
+//   - 三张卡片分别停在距顶部 14、26 和 38 px 的位置，类似 position: sticky，每张卡片的 top 偏移比前一张多 12 px，因此新卡片会覆盖前一张。
+//   - 每叠上一张卡片，下方卡片就以其顶边中点为中心缩小 4.5%；上方叠两张时缩小 9%。同时覆盖一层藏青色，使其变暗，遮罩不透明度最多为 16%。
+//   - 卡片阴影模糊半径为 14 px，向上偏移 2 px。滚动条滑块随滚动位置变化。
+// 适用场景: 适合按顺序逐张展示的步骤、功能或套餐。
+// 标签: stacking-cards, sticky, scroll, cards, position-sticky, steps, 滚动, 卡片, 堆叠, 吸附, 层次, 步骤
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#147
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 03
+// 03 スタッキングカード（スクロールすると、次のカードが下から来て前のカードに少しずらして重なる）
+CELLS[2] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const s = steps([[0.3, 0], [1.1, 1], [1.6, 1], [2.4, 2], [3.2, 2], [4.4, 0]], u);
+  const CARDS = [[C.blueL, C.ink, C.acc, '01', '策划', 0], [C.ink, '#fff', C.acc, '02', '制作', 2], [C.acc, '#fff', '#fff', '03', '交付', 1]];
+  const X = 70, CWD = 371, CHT = 124, STEP = 170;
+  view(k, () => {
+    k.fillStyle = C.soft; k.fillRect(0, 0, VW, VH);
+    CARDS.forEach(([bg, fg, nc, no, ttl, pv], i) => {
+      const top = Math.max(14 + i * 12, 16 + i * STEP - s * STEP);
+      const cov = clamp(s - i), sc = 1 - 0.045 * cov - 0.045 * clamp(s - i - 1);
+      k.save(); k.translate(VW / 2, top); k.scale(sc, sc); k.translate(-VW / 2, 0);
+      k.save(); k.shadowColor = 'rgba(28,35,51,.22)'; k.shadowBlur = 14; k.shadowOffsetY = -2; k.fillStyle = bg; rr(k, X, 0, CWD, CHT, 12); k.fill(); k.restore();
+      txt(k, no, X + 24, 44, `800 26px ${EN}`, nc);
+      txt(k, ttl, X + 24, 78, `800 20px ${JP}`, fg);
+      bars(k, X + 24, 92, 140, 2, i === 0 ? '#C3CDEA' : 'rgba(255,255,255,.35)');
+      pic(k, X + CWD - 160, 14, 144, CHT - 28, pv, 8);
+      if (cov > 0) { k.fillStyle = `rgba(28,35,51,${0.16 * cov})`; rr(k, X, 0, CWD, CHT, 12); k.fill(); }
+      k.restore();
+    });
+    sbar(k, s / 2, 0.4);
+  });
+};

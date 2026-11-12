@@ -1,0 +1,14 @@
+请在我的项目中使用「可变字体动画（Variable font animation）」。
+Motion Prompt #132 · 动态图形（第 2 弹）
+
+效果含义：文字粗细平滑变化
+示例表现：同一个单词从细体平滑变为极粗体，再变回细体；下方滑块同步显示字重。
+动画参数与实现规则：
+- 文字为“MOTION”，字号 112 px，字体 system-ui，字距 2 px。字重每 4.7 s 往返变化两次：v = 0.5 − 0.5·cos(2π × 2 × time ÷ 4.7)，在两端平滑减速。
+- 字重 = round(100 + 800v)，范围从 100 到 900，直接设置为字体的 font weight。
+- 下方滑块范围为 x = 112→427、y = 180，左侧标注 thin，右侧标注 bold。黄色滑块圆点半径为 14，随 v 移动，其上方显示当前字重。
+适用场景：适合标题、标志或单个词，通过字形本身的变化传达音量或情绪。
+
+参考实现（Canvas 2D，画面仅由时间决定）：https://showheyohtaki.github.io/motion-prompt/api/v1/en/e/132.txt
+共用辅助代码：https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+保留参考实现的形状、时序和缓动参数，根据我的项目替换文字、颜色与素材。如果我明确指定了时长、幅度或画面比例，请据此适配，并说明调整。

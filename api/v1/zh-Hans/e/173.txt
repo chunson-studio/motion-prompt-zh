@@ -1,0 +1,30 @@
+// Motion Prompt #173 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#173
+//
+// 斯坦尼康 / Steadicam
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 05 · 子类别: 镜头运动
+// 示例表现: 相机平稳地向前滑行，跟随行走的人物，只有缓慢轻柔的摆动，没有手持镜头那样的抖动。
+// 动画参数与实现规则:
+//   - 相机：以恒定 1.7 m/s 向前移动，每 4.7 s 前进 8 m；高度 1.45 m、俯仰角 -0.02 rad，不使用缓动。
+//   - 摆动：高度 ±3.5 cm，每 4.7 s 2 个周期；横向 ±5 cm，1 个周期；偏航角 ±0.012 rad、横滚角 ±0.006 rad。全部采用整数周期的正弦波，运动缓慢舒展；#034 手持镜头则快速且不规则。
+//   - 主体：人物以相同速度在相机前方 5 m 处行走，四肢每 4.7 s 完成 5 次迈步动作。
+//   - 树木：x = -5 m 处的树高 3.6 m，x = +5 m 处的树高 3.2 m，每隔 8 m 一棵，两排前后错开 4 m；山脉与太阳随相机一起移动。
+//   - 8 m 是地面网格间距 2 m 和树木间距 8 m 的整数倍，因此每 4.7 s 无缝循环。右上角读数显示“STEADICAM”。
+// 适用场景: 适合让步行中的运镜显得平滑，具有电影感。
+// 标签: steadicam, gimbal, stabilizer, smooth, glide, floating, camera move, 镜头, 斯坦尼康, 稳定, 跟拍, 平滑, 步行
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#173
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 05
+// 05 ステディカム: 低い周波数の小さなうねりだけで、なめらかに前進しながら人物を追う（#034 手持ちの細かい揺れとの違い）
+CELLS[4] = shot((k, w, h, u) => {
+  const v = 8 / CYC, z = u * v, T = u * 2 * Math.PI / CYC;   // 1周で8m進む＝格子（2m）と木（8m）の並びが継ぎ目なく戻る
+  const c = cam({ z, y: 1.45 + 0.035 * Math.sin(T * 2), x: 0.05 * Math.sin(T), yaw: 0.012 * Math.sin(T + 1), roll: 0.006 * Math.sin(T * 2 + 0.5), pitch: -0.02 });
+  const ex = [], L = 8, base = Math.floor(z / L) * L;
+  for (let i = 0; i < 10; i++) { const zz = base + i * L; ex.push([-5, 0, zz + 2, (kk, s) => tree(kk, s, 3.6)]); ex.push([5, 0, zz + 6, (kk, s) => tree(kk, s, 3.2, C.blueXL)]); }
+  world(k, w, h, c, { buildings: false, trees: false, extra: ex, mtnZ: z, sun: [30, 30, z + 170], gridX: 20, person: { z: z + 5, walk: T * 5 } });
+  return 'STEADICAM';
+});

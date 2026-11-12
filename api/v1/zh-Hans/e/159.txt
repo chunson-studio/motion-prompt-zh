@@ -1,0 +1,57 @@
+// Motion Prompt #159 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#159
+//
+// 实时校验 / Inline validation
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 15 · 子类别: 鼠标与输入交互
+// 示例表现: 邮箱地址尚未输入完整时，输入框变红并显示“格式不正确”；输入完整的一刻，切换为绿色对勾和“OK”。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168，邮箱输入框尺寸 300 × 44、圆角半径 8。在 0.45 s 点击输入框，4.2 s 点击外部。自 0.75 s 起，以每 0.115 s 一个字符的速度输入“hana@example.com”，共 16 个字符；自 3.6 s 起，以每 0.03 s 一个字符的速度删除。一次演示为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 从第二个字符开始，直到输入最后一个字符之前，内容判定为无效：在 0.15 s 内使用三次缓出，边框变红 #E5383B，填充变为浅红 #FFF1F1，下方出现带“!”的红色圆形图标和“格式不正确”，字号 13 px。
+//   - 最后一个字符输入后，内容变为有效：边框在 0.25 s 内变绿 #1E9E5A；输入框右端弹入半径为 11 的绿色圆形，带白色对勾，缓动相当于 GSAP elastic.out(1, 0.3)；下方显示“OK”。
+//   - 聚焦时，边框在 0.15 s 内从灰色变为藏青色，线宽从 1.5→2.2 px。开始删除内容后，提示消息消失。
+// 适用场景: 适合注册或联系表单，让用户在提交前发现输入错误。
+// 标签: validation, form, inline-validation, error-message, input, feedback, 表单, 实时校验, 邮箱, 错误提示, 成功, 反馈
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#159
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 15
+// 15 インラインバリデーション（打っている途中は赤で「形式が正しくありません」、正しく打ち終わると緑のチェックとOK）
+CELLS[14] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const TEXT = 'hana@example.com', F = { x: 106, y: 56, w: 300, h: 44 };
+  const len = t => { t = mod(t, CYC); return t < 0.75 ? 0 : t < 3.6 ? Math.min(TEXT.length, Math.floor((t - 0.75) / 0.115)) : Math.max(0, TEXT.length - Math.floor((t - 3.6) / 0.03)); };
+  const err = t => { const n = len(t); return mod(t, CYC) < 3.6 && n >= 2 && n < TEXT.length; };
+  const ok = t => mod(t, CYC) < 3.6 && len(t) === TEXT.length;
+  const focused = t => { t = mod(t, CYC); return t >= 0.45 && t < 4.2; };
+  const qe = trans(err, u, 0.15), qo = trans(ok, u, 0.25), fo = trans(focused, u, 0.15);
+  const cur = t => path([[0, 445, 205], [0.3, 262, 80], [0.6, 262, 80], [1.1, 455, 146], [3.8, 455, 146], [4.1, 470, 26], [4.3, 470, 26], [4.65, 445, 205], [4.7, 445, 205]], t);
+  const [cx, cy] = cur(u);
+  view(k, () => {
+    txt(k, '联系我们', F.x, 26, `800 15px ${JP}`, C.ink);
+    txt(k, '邮箱地址', F.x, 47, `700 12px ${JP}`, C.ink);
+    k.fillStyle = mix('#FFFFFF', '#FFF1F1', qe); rr(k, F.x, F.y, F.w, F.h, 8); k.fill();
+    const bc = mix(mix(mix('#C9D0DC', C.ink, fo), RED, qe), GREEN, qo);
+    k.lineWidth = lerp(1.5, 2.2, Math.max(fo, qe, qo)); k.strokeStyle = bc; rr(k, F.x, F.y, F.w, F.h, 8); k.stroke();
+    const s = TEXT.slice(0, len(u));
+    txt(k, s, F.x + 14, F.y + 28, `600 15px ${EN}`, C.ink);
+    if (focused(u) && !ok(u) && (mod(u, 0.9) < 0.5 || (u > 0.75 && u < 2.6))) { k.font = `600 15px ${EN}`; const xw = k.measureText(s).width; k.fillStyle = C.ink; k.fillRect(F.x + 14 + xw + 1, F.y + 12, 1.6, 20); }
+    if (qe > 0) {
+      k.save(); k.globalAlpha = qe;
+      k.fillStyle = RED; k.beginPath(); k.arc(F.x + 7, F.y + F.h + 20, 7, 0, 7); k.fill(); txt(k, '!', F.x + 7, F.y + F.h + 20.5, `800 11px ${EN}`, '#fff', 'center', 'middle');
+      txt(k, '格式不正确', F.x + 20, F.y + F.h + 20.5, `700 13px ${JP}`, RED, 'left', 'middle');
+      k.restore();
+    }
+    if (qo > 0) {
+      k.save(); k.globalAlpha = qo;
+      k.fillStyle = GREEN; k.beginPath(); k.arc(F.x + F.w - 22, F.y + F.h / 2, 11 * eEl(qo), 0, 7); k.fill(); check(k, F.x + F.w - 22, F.y + F.h / 2, 12, '#fff', 2.4);
+      k.fillStyle = GREEN; k.beginPath(); k.arc(F.x + 7, F.y + F.h + 20, 7, 0, 7); k.fill(); check(k, F.x + 7, F.y + F.h + 20, 8, '#fff', 1.8);
+      txt(k, 'OK', F.x + 20, F.y + F.h + 20.5, `800 13px ${EN}`, GREEN, 'left', 'middle');
+      k.restore();
+    }
+    click(k, cx, cy, u, [0.45, 4.2]);
+  });
+};

@@ -1,0 +1,41 @@
+// Motion Prompt #069 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#069
+//
+// 骨架屏 / Skeleton screen
+// 分类: ui (UI 组件) · element 21 · 子类别: 导航与状态反馈
+// 示例表现: 点击重新加载后，列表内容变成形状相同的灰色占位块，并出现扫光；加载结束后恢复内容。
+// 动画参数与实现规则:
+//   - 卡片尺寸 542×191，周期 4.5 s。列表有两行，每行包含一张 96×56 的图片和三行文字。光标在 1.0 s 点击右上角的重新加载图标。
+//   - 在 1.05–1.2 s 内线性切换，内容变成灰色 #e9e7e5 圆角占位块，大小和位置与原内容相同。
+//   - 扫光：一条宽 160 的白色光带，边缘透明、中间不透明度 0.75，每隔 0.9 s 从 x −200 扫到 x 742；仅绘制在占位块上。
+//   - 内容在 3.0–3.3 s 内线性恢复。
+// 适用场景: 适合需要短暂加载的列表或卡片，让用户等待时仍能看清页面布局。
+// 标签: skeleton, skeleton-screen, placeholder, shimmer, loading, ghost-content, 骨架屏, 占位, 加载, 扫光, 列表, 等待
+// 尺寸: 542x191 px · 周期: 4.5 s
+// 依赖: kit ui -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/ui.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#069
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 21
+// 21 スケルトン（Skeleton screen）
+CELLS[20] = ui((w, h, t) => {
+  const sk = seg(t, 1.05, 1.2) * (1 - seg(t, 3.0, 3.3));
+  ring(w - 40, 26, 14, C.line2, 1.8); X.beginPath(); X.arc(w - 40, 26, 7, -Math.PI * .1, Math.PI * 1.4); X.strokeStyle = '#666'; X.lineWidth = 2.2; X.stroke();
+  bar(24, 20, 160, C.line2, 12);
+  for (let k = 0; k < 2; k++) {
+    const y = 56 + k * 66;
+    X.save(); X.globalAlpha = 1 - sk; mountains(24, y, 96, 56, k); bar(136, y + 6, 200, C.ink, 11); bar(136, y + 26, 340); bar(136, y + 42, 260); X.restore();
+    if (sk > 0) {
+      X.save(); X.globalAlpha = sk; const g = '#e9e7e5';
+      fillRR(24, y, 96, 56, 8, g); fillRR(136, y + 4, 200, 14, 7, g); fillRR(136, y + 26, 340, 10, 5, g); fillRR(136, y + 42, 260, 10, 5, g);
+      // 光が横に流れる
+      const sx = -200 + ((t - 1.1) % 0.9) / 0.9 * (w + 400);
+      X.globalCompositeOperation = 'source-atop';
+      const gr = X.createLinearGradient(sx - 80, 0, sx + 80, 0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      X.fillStyle = gr; X.fillRect(0, y - 2, w, 64);
+      X.restore();
+    }
+  }
+  pointer([[.3, w + 30, h + 30], [.95, w - 38, 30], [1.4, w - 38, 30], [2.1, w + 30, h + 30]], [1.0], t);
+});

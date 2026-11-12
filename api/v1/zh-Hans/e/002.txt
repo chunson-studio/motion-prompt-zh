@@ -1,0 +1,37 @@
+// Motion Prompt #002 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#002
+//
+// 交错动画 / Stagger
+// 分类: motion (动态图形) · element 02 · 子类别: 入场与文字
+// 示例表现: 图表柱条从左到右依次升起，每根柱条稍微延后开始。
+// 动画参数与实现规则:
+//   - 每 2.35 s 完成一轮。七根柱条，宽 44、间隔 20，高度依次为 52、84、68、112、92、136、158；颜色循环使用蓝色、珊瑚色、黄色和薄荷绿。
+//   - 第 i 根柱条从 0 开始编号，在 0.15 + 0.12·i s 开始，用 0.5 s 从高度 0 增长到完整高度，使用 backOut 缓动，s = 2.6。柱条锚定在基线上，先超出目标高度，再回落稳定。
+//   - 白色圆点半径 6.5，位于柱条顶端上方 16 px；比对应柱条晚 0.34 s 开始，使用弹簧公式 1 − e^(−7t)·cos(16t)。
+//   - 退场：柱条从 1.78 + 0.045·i s 开始，在 0.26 s 内使用三次缓入缩小；圆点先消失，从 1.70 + 0.045·i s 开始，持续 0.2 s。
+// 适用场景: 适合让列表行、图表柱条或卡片等多个元素依次出现，引导视线按顺序浏览。
+// 标签: stagger, sequence, delay, cascade, bar-chart, list, entrance, 交错, 依次, 柱状图, 错峰, 列表, 入场
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#002
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 02
+// 02 スタガー（グラフの棒が、少しずつ時間をずらして順に立ち上がる）
+CELLS[1] = (k, w, h, u) => {
+  stage(k);
+  const N = 7, BW = 44, G = 20, x0 = (w - (N * BW + (N - 1) * G)) / 2, base = h - 30;
+  const HS = [52, 84, 68, 112, 92, 136, 158];
+  k.fillStyle = C.navy3; rr(k, x0 - 18, base, N * BW + (N - 1) * G + 36, 5, 2.5); k.fill();
+  const lu = mod(u, CYC / 2);
+  for (let i = 0; i < N; i++) {
+    const t0 = 0.15 + i * 0.12, g = backOut(P(lu, t0, t0 + 0.5), 2.6) * (1 - eIn(P(lu, 1.78 + i * 0.045, 2.04 + i * 0.045)));
+    if (g <= 0.001) continue;
+    const hh = HS[i] * g, x = x0 + i * (BW + G);
+    k.fillStyle = PAL[i % 4]; rr(k, x, base - hh, BW, hh, [12, 12, 3, 3]); k.fill();
+    // 棒の上の点（さらに遅れて出る）
+    const d = spring(lu - t0 - 0.34, 16, 7) * (1 - eIn(P(lu, 1.7 + i * 0.045, 1.9 + i * 0.045)));
+    if (d > 0.01) { k.fillStyle = '#fff'; k.beginPath(); k.arc(x + BW / 2, base - hh - 16, 6.5 * d, 0, 7); k.fill(); }
+  }
+};

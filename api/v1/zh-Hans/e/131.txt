@@ -1,0 +1,37 @@
+// Motion Prompt #131 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#131
+//
+// 路径文字 / Text on a path
+// 分类: motion2 (动态图形（第 2 弹）) · element 11 · 子类别: 文字与图形
+// 示例表现: 一行文字沿波浪曲线流动，每个字母都顺着曲线方向旋转。
+// 动画参数与实现规则:
+//   - 路径为 y = 118 + 42·sin(2πx ÷ 330 + 0.6)，x 范围为 −70 至 609；在路径下方 6 px 处绘制藏青色虚线，虚线段长/间隔为 14/10，线宽 5。
+//   - 重复排列“ALONG THE LINE • ”，字号 42 px、粗体、字距 2 px。按沿路径的弧长定位每个字符，并将其旋转到路径的切线方向。
+//   - 每 4.7 s，文字沿路径移动一个完整字符串的长度，从而实现无缝循环。
+//   - 字母为白色，圆点为黄色。
+// 适用场景: 适合让文字沿形状排列并移动，例如围绕标志、沿道路、河流或波浪流动，或制作循环文字带。
+// 标签: text-on-path, path-text, curved-text, text, marquee, wave, scroll, 文字, 路径, 曲线, 波浪, 环绕, 循环
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#131
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 11
+// 11 テキストオンパス（文字列が、波打つ線に沿って流れていく）
+const TOP = (() => { const pts = []; for (let x = -70; x <= CW + 70; x += 4) pts.push([x, 118 + 42 * Math.sin(x * 2 * Math.PI / 330 + 0.6)]); return { pts, cum: pathLen(pts) }; })();
+CELLS[10] = (k, w, h, u) => {
+  stage(k);
+  k.save(); k.setLineDash([14, 10]); k.strokeStyle = C.navy3; k.lineWidth = 5; k.lineCap = 'round'; k.beginPath(); TOP.pts.forEach((p, i) => i ? k.lineTo(p[0], p[1] + 6) : k.moveTo(p[0], p[1] + 6)); k.stroke(); k.restore();
+  const f = `800 42px ${DISP}`, S = 'ALONG THE LINE • '; k.font = f;
+  const ws = [...S].map(ch => k.measureText(ch).width + 2), run = ws.reduce((a, b) => a + b, 0), L = TOP.cum[TOP.cum.length - 1], shift = (u / CYC) * run;
+  for (let r = -2; r * run + shift < L; r++) {
+    let s = r * run + shift;
+    [...S].forEach((ch, j) => {
+      const c = s + ws[j] / 2; s += ws[j];
+      if (c < 0 || c > L || ch === ' ') return;
+      const p = ptAt(TOP.pts, TOP.cum, c / L);
+      k.save(); k.translate(p[0], p[1]); k.rotate(p[2]); txt(k, ch, 0, 0, f, ch === '•' ? C.yel : '#fff', 'center', 'alphabetic'); k.restore();
+    });
+  }
+};

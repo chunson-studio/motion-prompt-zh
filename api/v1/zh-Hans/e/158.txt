@@ -1,0 +1,47 @@
+// Motion Prompt #158 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#158
+//
+// 浮动标签 / Floating label
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 14 · 子类别: 鼠标与输入交互
+// 示例表现: 点击输入框时，标签缩小并移到上边框，为输入留出空间；输入框为空且失去焦点后，标签回到框内。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168，输入框尺寸 300 × 46、圆角半径 8，标签为“邮箱地址”，字号 15 px。在 0.65 s 点击输入框，在 3.95 s 点击外部使其失去焦点。一次演示为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 输入框处于聚焦状态或内容非空时，标签在 0.24 s 内使用三次缓出，从 15 px 缩小到 11.5 px，由框内中央移到上边框；左内边距从 14 变为 10 px。标签后方用白色遮住边框。
+//   - 聚焦时，在 0.15 s 内使用三次缓出，边框从灰色变为橙色，线宽从 1.5→2.2 px，标签也变为橙色。
+//   - 从 1.0 s 开始，以每 0.075 s 一个字符的速度输入“hello@example.com”；从 3.2 s 开始，以每 0.03 s 一个字符的速度删除。内容为空且失去焦点后，标签在同样的 0.24 s 内回到框内。
+//   - 文本插入光标每 0.9 s 闪烁一次，输入时保持亮起。
+// 适用场景: 适合字段较多的表单，在不额外占用空间的情况下始终显示字段标签。
+// 标签: floating-label, form, input, label, focus, material-design, 表单, 浮动标签, 输入框, 聚焦, 标签, 交互
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#158
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 14
+// 14 フローティングラベル（入力欄の中のラベルが、入力を始めると小さくなって欄の上へ移る）
+CELLS[13] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const TEXT = 'hello@example.com', F = { x: 106, y: 58, w: 300, h: 46 };
+  const len = t => { t = mod(t, CYC); return t < 1.0 ? 0 : t < 3.2 ? Math.min(TEXT.length, Math.floor((t - 1.0) / 0.075)) : Math.max(0, TEXT.length - Math.floor((t - 3.2) / 0.03)); };
+  const focused = t => { t = mod(t, CYC); return t >= 0.65 && t < 3.95; };
+  const q = trans(t => focused(t) || len(t) > 0, u, 0.24, eOut), fo = trans(focused, u, 0.15);
+  const cur = t => path([[0, 445, 205], [0.45, 262, 82], [0.85, 262, 82], [1.4, 452, 142], [3.5, 452, 142], [3.85, 470, 26], [4.05, 470, 26], [4.6, 445, 205], [4.7, 445, 205]], t);
+  const [cx, cy] = cur(u);
+  view(k, () => {
+    k.fillStyle = C.soft; k.fillRect(0, 0, VW, VH);
+    k.save(); k.shadowColor = 'rgba(28,35,51,.1)'; k.shadowBlur = 12; k.shadowOffsetY = 3; k.fillStyle = '#fff'; rr(k, 80, 12, 352, 148, 12); k.fill(); k.restore();
+    txt(k, '会员注册', F.x, 40, `800 15px ${JP}`, C.ink);
+    k.lineWidth = lerp(1.5, 2.2, fo); k.strokeStyle = mix('#C9D0DC', C.acc, fo); rr(k, F.x, F.y, F.w, F.h, 8); k.stroke();
+    const s = TEXT.slice(0, len(u));
+    txt(k, s, F.x + 14, F.y + 30, `600 15px ${EN}`, C.ink);
+    if (focused(u) && (mod(u, 0.9) < 0.5 || (u > 1 && u < 2.4))) { k.font = `600 15px ${EN}`; const xw = k.measureText(s).width; k.fillStyle = C.ink; k.fillRect(F.x + 14 + xw + 1, F.y + 14, 1.6, 20); }
+    const fs = lerp(15, 11.5, q), ly = lerp(F.y + F.h / 2, F.y, q), lx = F.x + lerp(14, 10, q), LAB = '邮箱地址';
+    k.font = `600 ${fs}px ${JP}`; const lw = k.measureText(LAB).width;
+    if (q > 0) { k.fillStyle = '#fff'; k.fillRect(lx - 4, ly - 3, lw + 8, 6); }
+    txt(k, LAB, lx, ly + 0.5, `600 ${fs}px ${JP}`, mix('#8B94A6', C.acc, fo), 'left', 'middle');
+    btn(k, F.x, 118, F.w, 30, '下一步', C.ink, '#fff', 12);
+    click(k, cx, cy, u, [0.65, 3.95]);
+  });
+};

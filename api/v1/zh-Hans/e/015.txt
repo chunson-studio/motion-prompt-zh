@@ -1,0 +1,39 @@
+// Motion Prompt #015 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#015
+//
+// 粒子效果 / Particles
+// 分类: motion (动态图形) · element 15 · 子类别: 运动细节
+// 示例表现: 粒子持续从发射点向上喷出，向四周散开后落下。
+// 动画参数与实现规则:
+//   - 共有 84 个粒子，从画面底部中央发射，即水平中心、底边上方 20 px 的位置。
+//   - 初始速度：水平方向 ±190 px/s，向上 250–400 px/s。重力为 470 px/s²，形成抛物线路径。
+//   - 每个粒子的重复周期为 2.35 s 或约 1.57 s，并带随机的起始偏移；随机种子固定，因此每次播放一致。
+//   - 生命周期最长为 1.5 s：前 0.06 s 渐入，最后 30% 渐出。缩放比例从 1.15→0.7。
+//   - 形状为圆形、方形和三角形，尺寸 5–11 px，颜色包括蓝色、珊瑚色、黄色和薄荷绿，旋转速度最高为 ±4.5 rad/s。
+// 适用场景: 适合增加庆祝或活跃气氛，可作为彩纸或火花的表现形式。
+// 标签: particles, confetti, emitter, fountain, gravity, celebration, sparks, 粒子, 喷发, 庆祝, 彩纸, 重力, 抛物线
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#015
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 15
+// 15 パーティクル（粒が次々と噴き出して、飛び散って落ちる）
+const PARTS = (() => { const R = rand(15), a = []; for (let i = 0; i < 84; i++) { const n = R() < 0.5 ? 2 : 3; a.push({ T: CYC / n, ph: R() * CYC, vx: (R() - 0.5) * 2 * 190, vy: -(250 + R() * 150), sz: 5 + R() * 6, col: PAL[i % 4], kind: i % 3, spin: (R() - 0.5) * 9 }); } return a; })();
+CELLS[14] = (k, w, h, u) => {
+  stage(k);
+  const X = w / 2, Y = h - 20, G = 470;
+  for (const p of PARTS) {
+    const t = mod(u + p.ph, p.T), life = Math.min(p.T, 1.5); if (t > life) continue;
+    const x = X + p.vx * t, y = Y + p.vy * t + 0.5 * G * t * t, a = Math.min(1, t / 0.06) * (1 - smooth(P(t, life * 0.7, life))), sc = lerp(1.15, 0.7, t / life);
+    k.globalAlpha = a; k.fillStyle = p.col; k.save(); k.translate(x, y); k.rotate(t * p.spin); k.scale(sc, sc);
+    if (p.kind === 0) { k.beginPath(); k.arc(0, 0, p.sz, 0, 7); k.fill(); }
+    else if (p.kind === 1) { k.fillRect(-p.sz, -p.sz, p.sz * 2, p.sz * 2); }
+    else { k.beginPath(); k.moveTo(0, -p.sz * 1.3); k.lineTo(p.sz * 1.2, p.sz); k.lineTo(-p.sz * 1.2, p.sz); k.closePath(); k.fill(); }
+    k.restore();
+  }
+  k.globalAlpha = 1;
+  k.fillStyle = C.navy3; rr(k, X - 70, h - 12, 140, 30, 10); k.fill();
+  k.fillStyle = '#fff'; rr(k, X - 30, h - 22, 60, 30, 10); k.fill();
+};

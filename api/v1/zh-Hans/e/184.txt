@@ -1,0 +1,32 @@
+// Motion Prompt #184 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#184
+//
+// 大特写 / Extreme close-up
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 16 · 子类别: 角度与构图
+// 示例表现: 从面部特写逐渐收紧，直到双眼填满整个画面。
+// 动画参数与实现规则:
+//   - 相机：将前方 1.3 m 处人物的右眼置于画面中心；该眼位于面部中心左侧 0.06 m、高度 1.66 m。相机位置不移动。
+//   - 焦距：从 610 px→2040 px，标示为 44mm→148mm，约 3.3×。f = 610 × (2040/610)^p，其中 p 在 0.5–3.4 s 采用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+//   - 面部：蓝色头部半径 0.16 m，白色双眼为 0.045×0.028 m 的椭圆，深色瞳孔半径 0.016 m，另有高光和白色眉毛。开始时为完整面部特写，头部宽约 150 px，结束时仅双眼填满画面。
+//   - 背景：树木和建筑模糊 3 px，随镜头收紧而离开画面。
+//   - 返回：在 3.4–4.2 s 保持静止，再在最后 0.5 s 交叉淡化回起始状态；右上角读数显示焦距与景别缩写：44mm CU→148mm ECU。
+// 适用场景: 适合情绪高潮，或引导观众注意某个细小的关键细节。
+// 标签: extreme close-up, ecu, close-up, eye, detail, macro, framing, 镜头, 大特写, 眼睛, 细节, 情绪, 变焦
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#184
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 16
+// 16 エクストリームクローズアップ: 顔のクローズアップから、目だけが画面を埋めるまで寄る
+CELLS[15] = shot(camCell((k, w, h, p) => {
+  const f = 610 * Math.pow(2040 / 610, p);
+  world(k, w, h, cam({ f, x: -0.06, y: 1.66 }), {
+    blurBg: 3, trees: true,
+    extra: [[0, 0, 1.3, (kk) => {   // 目のある顔
+      person(kk, 1);
+      [[-0.06, 1.66], [0.06, 1.66]].forEach(([x, y]) => { kk.fillStyle = '#fff'; kk.beginPath(); kk.ellipse(x, y, 0.045, 0.028, 0, 0, 7); kk.fill(); kk.fillStyle = C.ink; kk.beginPath(); kk.arc(x + 0.008, y, 0.016, 0, 7); kk.fill(); kk.fillStyle = '#fff'; kk.beginPath(); kk.arc(x + 0.014, y + 0.007, 0.005, 0, 7); kk.fill(); kk.strokeStyle = '#fff'; kk.lineWidth = 0.012; kk.beginPath(); kk.arc(x, y + 0.02, 0.05, Math.PI * 1.15, Math.PI * 1.85); kk.stroke(); });
+    }]]
+  });
+}, p => `${mm(610 * Math.pow(2040 / 610, p))} ${p > 0.85 ? 'ECU' : 'CU'}`));

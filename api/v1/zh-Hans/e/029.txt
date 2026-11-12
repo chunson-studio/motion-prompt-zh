@@ -1,0 +1,28 @@
+// Motion Prompt #029 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#029
+//
+// 跟拍 / Tracking shot
+// 分类: camera (镜头运动与转场) · element 05 · 子类别: 镜头运动
+// 示例表现: 相机与步行人物以相同速度横向移动，人物保持居中，近处立柱则更快地从旁掠过。
+// 动画参数与实现规则:
+//   - 相机：以恒定 1.7 m/s 向右移动，4.7 s 内从 x = -4.0 m→+4.0 m；高度 1.3 m，朝向正前方，不使用缓动。
+//   - 主体：人物在前方 7.5 m 处，与相机保持相同的 x 坐标，因此始终位于画面中央；四肢摆动角度为 sin(u×7)×0.42 rad。
+//   - 视差：纵深 4 m 处、间隔 1.6 m 的立柱向左掠过最快，其次是树木，再是 48 m 远处的建筑；山脉几乎不动。
+//   - 右上角读数显示“→ 1.7m/s”。
+//   - 重复：每 4.7 s 跳回起始状态，立柱和地面网格在接缝处对齐，背景建筑和树木会跳变。
+// 适用场景: 适合跟随步行或奔跑的主体，在展示动作的同时保留移动感。
+// 标签: tracking, tracking shot, follow, truck, lateral, sideways, parallax, walk, 镜头, 跟拍, 横移, 人物, 视差, 运动
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#029
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 05
+// 05 トラッキング: 人物と並んで横移動（手前ほど速く流れる）
+CELLS[4] = shot((k, w, h, u) => {
+  const x = (u - CYC / 2) * 1.7;
+  const fgp = []; for (let i = -12; i <= 12; i++) fgp.push([i * 1.6, 4]);
+  world(k, w, h, cam({ x, y: 1.3 }), { person: { x, z: 7.5, walk: u * 7 }, fg: fgp });
+  return '→ 1.7m/s';
+});

@@ -1,0 +1,33 @@
+// Motion Prompt #179 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#179
+//
+// POV 镜头 / POV shot
+// 分类: camera2 (镜头运动与转场（第 2 弹）) · element 11 · 子类别: 角度与构图
+// 示例表现: 从角色双眼看出去：步行时的摆动与画面底部的双手表明这是第一人称视角，前方的人物向你挥手。
+// 动画参数与实现规则:
+//   - 相机：保持角色视线高度 1.6 m，向前行走 0 m→3.2 m；时段为 0.3–4.2 s，持续 3.9 s，使用三次缓入缓出，约等于 cubic-bezier(0.65,0,0.35,1)。
+//   - 步行摆动：高度变化 ±3 cm，每 4.7 s 6 个周期；横滚角变化 ±0.008 rad，3 个周期。只在移动时叠加这些摆动。
+//   - 双手：底部两角各有一只蓝色圆润手部，距中心 ±178 px，右手持白色手机。双手随身体移动，因此在画面中保持稳定，而外部世界产生摆动。
+//   - 前方 7.5 m 处的另一个人物注视着你，仅在 1.6–3.4 s 举起双臂挥手；前景有两根立柱。
+//   - 返回：最后 0.5 s 交叉淡化回起始状态，一次演示为 4.7 s；右上角读数显示“POV”。
+// 适用场景: 适合让观众代入角色的位置，或营造游戏、VR 般的第一人称体验。
+// 标签: pov, point of view, first person, subjective, eyes, hands, angle, 镜头, 第一人称, 主观视角, 代入, 步行, 视点
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit camera2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/camera2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#179
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 11
+// 11 POVショット: 登場人物の目で見た画。歩く上下動と画面下の両手で一人称だと分かる。前の人物が振り向いて手を振る
+CELLS[10] = shot(camCell((k, w, h, p, u) => {
+  const z = lerp(0, 3.2, p), T = u * 2 * Math.PI / CYC;
+  const bob = Math.sin(T * 6) * 0.03 * (p > 0 && p < 1 ? 1 : 0);
+  world(k, w, h, cam({ z, y: 1.6 + bob, roll: Math.sin(T * 3) * 0.008 * (p > 0 && p < 1 ? 1 : 0) }), {
+    person: { z: 7.5, armUp: u > 1.6 && u < 3.4, walk: 0 }, fg: [[-1.8, 2.6], [2.2, 3.8]],
+    after: (kk) => {   // 両手（画面の下の両端から入る。体と一緒に動くので、揺れるのは世界のほう）
+      kk.fillStyle = C.blue;
+      [-1, 1].forEach(sx => { kk.save(); kk.translate(sx * 178, 64); kk.rotate(sx * -0.5); kk.fillStyle = C.blue; rr(kk, -34, -28, 68, 120, 30); kk.fill(); if (sx > 0) { kk.fillStyle = '#fff'; rr(kk, -17, -62, 34, 54, 6); kk.fill(); kk.strokeStyle = C.blue; kk.lineWidth = 3; rr(kk, -17, -62, 34, 54, 6); kk.stroke(); } kk.restore(); });
+    }
+  });
+}, p => 'POV', 0.3, 4.2));

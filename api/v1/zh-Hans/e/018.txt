@@ -1,0 +1,35 @@
+// Motion Prompt #018 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#018
+//
+// 图形转场 / Shape transition
+// 分类: motion (动态图形) · element 18 · 子类别: 转场与强调
+// 示例表现: 彩色条带扫过并遮住画面，离开后显露下一个场景。
+// 动画参数与实现规则:
+//   - 白昼→夜景→白昼，每段 2.35 s。四条水平条带，高度 52，分别为蓝色、珊瑚色、黄色和薄荷绿，端部倾斜偏移 80 px。
+//   - 覆盖：0.38–1.0 s。各条带前缘从画面一侧移至另一侧；相邻条带延迟本阶段时长的 14%，每条带在本阶段时长的 58% 内使用三次缓入缓出移动。
+//   - 在 1.0 s，画面被完全覆盖时，将下方场景换成下一个场景。
+//   - 揭开：1.12–1.75 s。各条带后缘按相同的延迟与缓动曲线跟进，露出下一个场景。
+//   - 方向：白昼→夜景时从左向右；夜景→白昼时镜像反向。
+// 适用场景: 适合使用品牌色图形切换场景，例如章节分隔或话题变化。
+// 标签: shape-transition, transition, wipe, bands, stripes, cover, scene-change, 图形, 转场, 条带, 品牌色, 覆盖, 揭示
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#018
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 18
+// 18 シェイプトランジション（色のついた帯が画面を覆い隠し、抜けると次の画面になっている）
+CELLS[17] = abCell((k, w, h, u, a, b) => {
+  const p1 = P(u, TA - 0.12, TA + 0.5), p2 = P(u, TA + 0.62, TA + 1.25), N = 4, sk = 80;
+  SCR[p1 >= 1 ? b : a](k, w, h);
+  const cols = [C.blue, C.coral, C.yel, C.mint];
+  for (let i = 0; i < N; i++) {
+    const d = i * 0.14, e1 = eIO(clamp((p1 - d) / (1 - 0.42))), e2 = eIO(clamp((p2 - d) / (1 - 0.42)));
+    if (e1 <= 0 || e2 >= 1) continue;
+    const bh = h / N + 1, y = i * h / N, span = w + sk + 20, dir = a === 0 ? 1 : -1;
+    let xa = -sk - 10 + e2 * span, xb = -sk - 10 + e1 * span;
+    k.save(); if (dir < 0) { k.translate(w, 0); k.scale(-1, 1); }
+    k.fillStyle = cols[i]; k.beginPath(); k.moveTo(xa + sk, y); k.lineTo(xb + sk, y); k.lineTo(xb, y + bh); k.lineTo(xa, y + bh); k.closePath(); k.fill(); k.restore();
+  }
+});

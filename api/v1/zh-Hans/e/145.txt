@@ -1,0 +1,50 @@
+// Motion Prompt #145 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#145
+//
+// 滚动时间轴 / Timeline on scroll
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 01 · 子类别: 滚动效果
+// 示例表现: 页面向下滚动时，橙色线条沿时间轴向下延伸；线条到达的圆点会填充，年份和事件从右侧滑入。向上滚动时，动画反向播放。
+// 动画参数与实现规则:
+//   - 浏览器视口为 511 × 168。滚动距离在 0.3–2.3 s 从 0→190 px，在 3.0–4.3 s 从 190→0，使用三次缓入缓出。一次往返为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 时间轴位于 x = 168：橙色线条沿宽度为 3 的灰色轨道延伸。线条末端位于 scroll + 126 px，因此始终距视口顶部 126 px，距底部 42 px。
+//   - 共有五个条目，年份为 2018–2026；圆点位于页面 y = 72、126、180、234 和 288，圆点为白色，半径 7.5，圆环线宽 2.5。
+//   - 线条末端越过某个圆点后，再延伸 22 px 的过程中，使用三次缓出：外环变为橙色，内圆点半径从 0 增至 4；年份文字为 18 px、橙色，事件文字为 15 px，二者从右侧滑动 16 px 的同时渐入。
+//   - 向上滚动时，使用相同公式缩短线条并隐藏条目。右侧滚动条滑块随滚动位置变化。
+// 适用场景: 适合公司历史、里程碑，或需要按时间顺序阅读的分步流程。
+// 标签: timeline, scroll, history, milestones, scroll-driven, progress-line, 滚动, 时间轴, 历史, 里程碑, 进度, 显现
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#145
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 01
+// 01 タイムラインアニメーション（スクロールに合わせて年表の線が上から伸び、線が届いた年が順に現れる）
+CELLS[0] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const y = steps([[0.3, 0], [2.3, 190], [3.0, 190], [4.3, 0]], u);
+  const ROWS = [[72, '2018', '创立'], [126, '2020', '1号店开业'], [180, '2022', '会员1万人'], [234, '2024', '应用上线'], [288, '2026', '走向海外']];
+  const LX = 168, L = y + 126;                         // 線の先（画面の下から 42px の所までページと一緒に伸びる）
+  view(k, () => {
+    k.save(); k.translate(0, -y);
+    txt(k, 'HISTORY', 34, 34, `800 11px ${EN}`, C.acc, 'left', 'alphabetic', '2px');
+    txt(k, '发展历程', 34, 60, `800 20px ${JP}`, C.ink);
+    pic(k, 34, 76, 100, 62, 0, 6); bars(k, 34, 148, 90, 2);
+    k.fillStyle = C.faint; rr(k, LX - 1.5, 52, 3, 248, 1.5); k.fill();
+    k.fillStyle = C.acc; rr(k, LX - 1.5, 52, 3, clamp(L - 52, 0, 248), 1.5); k.fill();
+    for (const [iy, yr, lab] of ROWS) {
+      const q = eOut(clamp((L - iy) / 22));
+      k.fillStyle = '#fff'; k.beginPath(); k.arc(LX, iy, 7.5, 0, 7); k.fill();
+      k.lineWidth = 2.5; k.strokeStyle = q > 0 ? C.acc : C.faint; k.stroke();
+      if (q > 0) { k.fillStyle = C.acc; k.beginPath(); k.arc(LX, iy, 4 * q, 0, 7); k.fill(); }
+      k.save(); k.globalAlpha = q; k.translate(16 * (1 - q), 0);
+      txt(k, yr, LX + 22, iy + 6, `800 18px ${EN}`, C.acc);
+      txt(k, lab, LX + 82, iy + 5, `700 15px ${JP}`, C.ink);
+      bars(k, LX + 82, iy + 15, 190, 1, C.faint, 5);
+      k.restore();
+    }
+    k.restore();
+    sbar(k, y / 190, 0.45);
+  });
+};

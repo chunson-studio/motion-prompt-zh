@@ -1,0 +1,48 @@
+// Motion Prompt #168 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#168
+//
+// 背景视频 / Background video
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 24 · 子类别: 亮点展示
+// 示例表现: 首屏背景中，云朵与海浪持续移动，上方的标题和按钮保持静止。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168。背景影像由天空、云朵、山脉和海面组成，填满首屏；上方叠加静止的白色标题，字号 28 px，以及按钮。背景影像每 4.7 s 循环，每个 9.4 s 的效果包周期内循环两次。
+//   - 云朵：远层图案每 170 px 重复，每 4.7 s 向右移动 170 px，约 36 px/s；近层每 340 px 重复，每 4.7 s 移动 340 px，约 72 px/s。山脉保持静止。
+//   - 海面：三条波浪位于 y = 118、130、146，振幅为 2.5–3 px，波长依次为 90、60、120 px。只有中间一条反向移动，每 4.7 s 移动两个波长；其余两条同期向右移动一个波长。
+//   - 为保证文字可读，背景上覆盖 12% 不透明度的藏青色层，并用渐变使左侧 300 px 变暗，不透明度从 0.45→0；标题带有模糊半径 10 px 的阴影。
+//   - 右下角显示播放状态标记，包含暂停和静音状态。真实网站中的视频应使用 autoplay、muted、loop 和 playsinline。
+// 适用场景: 适合旅游、酒店、餐厅或招聘网站的首屏，用氛围与运动传达单张照片难以表达的感受。
+// 标签: background-video, hero, video, autoplay, loop, first-view, 背景视频, 首屏, 循环, 氛围, 海浪, 云朵
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#168
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 24
+// 24 背景動画（ファーストビューの背景で雲と波が流れ続け、その上に見出しとボタンが乗っている）
+function cloud(k, x, y, s, a) { k.fillStyle = `rgba(255,255,255,${a})`; k.beginPath(); k.ellipse(x, y, 30 * s, 10 * s, 0, 0, 7); k.ellipse(x - 12 * s, y - 6 * s, 14 * s, 11 * s, 0, 0, 7); k.ellipse(x + 8 * s, y - 10 * s, 17 * s, 14 * s, 0, 0, 7); k.fill(); }
+CELLS[23] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const f = u / CYC;
+  view(k, () => {
+    const g = k.createLinearGradient(0, 0, 0, 120); g.addColorStop(0, '#7C9EF4'); g.addColorStop(1, '#DCE5FF'); k.fillStyle = g; k.fillRect(0, 0, VW, VH);
+    k.fillStyle = 'rgba(255,240,230,.95)'; k.beginPath(); k.arc(400, 66, 20, 0, 7); k.fill();
+    // 遠い雲（170px ごとにくり返す柄が、1周期で1柄ぶん流れる）・近い雲（340px）
+    for (let x = -170; x < VW + 170; x += 170) { const xx = x + mod(f * 170, 170); cloud(k, xx + 40, 30, 0.7, 0.75); cloud(k, xx + 120, 58, 0.55, 0.6); }
+    for (let x = -340; x < VW + 340; x += 340) { const xx = x + mod(f * 340, 340); cloud(k, xx + 90, 44, 1.15, 0.95); cloud(k, xx + 260, 86, 0.9, 0.9); }
+    mount(k, VW, 132, [[0, .78], [.18, .66], [.36, .76], [.6, .62], [.82, .74], [1, .68]], '#6E8CEB', 0);
+    const sea = (y0, A, L, ph, col) => { k.fillStyle = col; k.beginPath(); k.moveTo(0, VH + 1); for (let x = 0; x <= VW + 4; x += 4) k.lineTo(x, y0 + A * Math.sin(2 * Math.PI * x / L + ph)); k.lineTo(VW, VH + 1); k.closePath(); k.fill(); };
+    sea(118, 2.5, 90, -2 * Math.PI * f, '#4B6BDB'); sea(130, 3, 60, 2 * Math.PI * f * 2, '#3B5CCF'); sea(146, 2.5, 120, -2 * Math.PI * f, '#2E4DB8');
+    k.fillStyle = 'rgba(28,35,51,.12)'; k.fillRect(0, 0, VW, VH);
+    { const sg = k.createLinearGradient(0, 0, 300, 0); sg.addColorStop(0, 'rgba(20,28,64,.45)'); sg.addColorStop(1, 'rgba(20,28,64,0)'); k.fillStyle = sg; k.fillRect(0, 0, 300, VH); }
+    k.save(); k.shadowColor = 'rgba(16,24,60,.55)'; k.shadowBlur = 10; k.shadowOffsetY = 2; txt(k, '出发去旅行。', 34, 60, `800 28px ${JP}`, '#fff', 'left', 'alphabetic', '1px'); k.restore();
+    bars(k, 34, 74, 160, 1, 'rgba(255,255,255,.85)');
+    btn(k, 34, 92, 96, 26, '立即预订');
+    // 再生中の印（一時停止・音なし）
+    k.fillStyle = 'rgba(14,18,28,.5)'; rr(k, 420, 134, 76, 24, 12); k.fill();
+    k.fillStyle = '#fff'; k.fillRect(435, 140, 3.5, 12); k.fillRect(442, 140, 3.5, 12);
+    k.beginPath(); k.moveTo(462, 143); k.lineTo(466, 143); k.lineTo(471, 139); k.lineTo(471, 153); k.lineTo(466, 149); k.lineTo(462, 149); k.closePath(); k.fill();
+    k.strokeStyle = '#fff'; k.lineWidth = 1.6; k.lineCap = 'round'; k.beginPath(); k.moveTo(476, 143); k.lineTo(482, 149); k.moveTo(482, 143); k.lineTo(476, 149); k.stroke();
+  });
+};

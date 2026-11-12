@@ -1,0 +1,35 @@
+// Motion Prompt #083 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#083
+//
+// 光标跟随 / Cursor follower
+// 分类: lp (落地页与网页效果) · element 11 · 子类别: 悬停与点击交互
+// 示例表现: 光标在页面内移动时，一个橙色圆形略微滞后地跟随。
+// 动画参数与实现规则:
+//   - 光标路径：x = 255 + 175·sin(2πt/4.8)，y = 86 + 46·sin(4πt/4.8)，形成横向的八字形，每 4.8 s 绕行一周。
+//   - 跟随圆形为橙色，半径 17，不透明度 0.88，绘制在光标下方。
+//   - 跟随规则：每帧（60 fps）移动剩余距离的 12%，即 x += (cursor x − x) × 0.12。
+//   - 箭头光标始终可见。
+// 适用场景: 适合品牌网站或作品集，增加可感知的趣味交互。
+// 标签: cursor, custom-cursor, cursor-follower, mouse-follow, lerp, trail, interaction, 光标跟随, 鼠标, 拖尾, 插值, 交互, 品牌网站
+// 尺寸: 539x208 px · 周期: 4.8 s
+// 依赖: kit lp -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#083
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 11
+// 11 マウスストーカー（カーソルのあとを、丸が少し遅れて追いかける）
+CELLS[10] = (k, w, h, u) => {
+  frame(k);
+  const cur = t => [255 + 175 * Math.sin(2 * Math.PI * t / CYC), 86 + 46 * Math.sin(4 * Math.PI * t / CYC)];
+  // 毎フレーム（60fps）残りの距離の 12% ずつ近づく
+  let t = u - 2, [fx, fy] = cur(t);
+  for (let i = 0; i < 120; i++) { t += 1 / 60; const [tx, ty] = cur(t); fx += (tx - fx) * 0.12; fy += (ty - fy) * 0.12; }
+  view(k, () => {
+    txt(k, 'CREATIVE STUDIO', VW / 2, 74, `800 34px ${EN}`, C.ink, 'center', 'alphabetic', '3px');
+    bars(k, VW / 2 - 120, 96, 240, 2, C.faint, 6, 12, 0.7);
+    btn(k, VW / 2 - 50, 128, 100, 24, '查看作品', C.ink);
+    k.fillStyle = C.acc; k.globalAlpha = 0.88; k.beginPath(); k.arc(fx, fy, 17, 0, 7); k.fill(); k.globalAlpha = 1;
+    const [cx, cy] = cur(u); cursor(k, cx, cy);
+  });
+};

@@ -1,0 +1,46 @@
+// Motion Prompt #154 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#154
+//
+// 聚光灯悬停 / Spotlight hover
+// 分类: lp2 (落地页与网页效果（第 2 弹）) · element 10 · 子类别: 鼠标与输入交互
+// 示例表现: 鼠标在深色卡片上移动时，仅光标周围的圆形区域被照亮，附近卡片的边缘也会发光。
+// 动画参数与实现规则:
+//   - 视口为 511 × 168，深色页面背景为 #121828，放置三张深色卡片，各为 147 × 116、圆角半径 10。一次演示为 4.7 s，每个 9.4 s 的效果包周期内执行两次。
+//   - 光标持续沿“八”字轨迹移动：x = 255 + 190·sin(2πt/4.7)，y = 92 + 40·sin(4πt/4.7)。
+//   - 每张卡片内部，以光标为中心绘制半径 115 px 的白色径向光，不透明度从中心的 0.34 向外降至 0；光不会溢出卡片边界。
+//   - 卡片边框线宽为 2，根据与光标的距离发光：使用半径 120 px、颜色 rgb(255,122,82) 的橙色径向光。远离光标的边缘只保留基础细线，即 8% 不透明度的白色。
+//   - 没有跟随延迟，光心与光标位置完全一致；常见实现是将坐标写入 CSS 变量，用作 radial-gradient 的中心。
+// 适用场景: 适合深色主题网站中成排的功能或价格卡片，突出鼠标指向的位置。
+// 标签: spotlight, hover, glow, cursor, radial-gradient, dark-mode, card, 悬停, 聚光灯, 发光, 深色, 卡片, 光标
+// 尺寸: 539x208 px · 周期: 9.4 s
+// 依赖: kit lp2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#154
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 10
+// 10 スポットライトホバー（暗いカードの上で、カーソルの周りだけが丸く明るく光る）
+CELLS[9] = (k, w, h, u) => {
+  u = snapU(u);
+  frame(k);
+  const cx = 255 + 190 * Math.sin(2 * Math.PI * u / CYC), cy = 92 + 40 * Math.sin(4 * Math.PI * u / CYC);
+  view(k, () => {
+    k.fillStyle = '#121828'; k.fillRect(0, 0, VW, VH);
+    txt(k, 'FEATURES', VW / 2, 26, `800 11px ${EN}`, 'rgba(255,255,255,.45)', 'center', 'alphabetic', '3px');
+    const LAB = ['简单', '安心', '快速'];
+    for (let i = 0; i < 3; i++) {
+      const x = 22 + i * 160, y = 40, cw = 147, ch = 116;
+      k.fillStyle = '#1C2335'; rr(k, x, y, cw, ch, 10); k.fill();
+      k.save(); rr(k, x, y, cw, ch, 10); k.clip();
+      const g = k.createRadialGradient(cx, cy, 0, cx, cy, 115); g.addColorStop(0, 'rgba(255,255,255,.34)'); g.addColorStop(1, 'rgba(255,255,255,0)'); k.fillStyle = g; k.fillRect(x, y, cw, ch);
+      k.restore();
+      k.lineWidth = 1.5; k.strokeStyle = 'rgba(255,255,255,.08)'; rr(k, x + 0.75, y + 0.75, cw - 1.5, ch - 1.5, 10); k.stroke();
+      const sg = k.createRadialGradient(cx, cy, 0, cx, cy, 120); sg.addColorStop(0, 'rgba(255,122,82,1)'); sg.addColorStop(1, 'rgba(255,122,82,0)');
+      k.lineWidth = 2; k.strokeStyle = sg; rr(k, x + 1, y + 1, cw - 2, ch - 2, 10); k.stroke();
+      k.strokeStyle = 'rgba(255,255,255,.75)'; k.lineWidth = 2; k.beginPath(); k.arc(x + 30, y + 32, 12, 0, 7); k.stroke();
+      txt(k, LAB[i], x + 18, y + 72, `800 16px ${JP}`, 'rgba(255,255,255,.9)');
+      bars(k, x + 18, y + 86, 110, 2, 'rgba(255,255,255,.16)', 5, 10);
+    }
+    cursor(k, cx, cy);
+  });
+};

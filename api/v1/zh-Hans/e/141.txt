@@ -1,0 +1,31 @@
+// Motion Prompt #141 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#141
+//
+// 像素化转场 / Pixelate
+// 分类: motion2 (动态图形（第 2 弹）) · element 21 · 子类别: 转场与强调
+// 示例表现: 画面逐渐变成更粗大的像素块，在最粗糙时切换场景，然后重新变清晰。
+// 动画参数与实现规则:
+//   - 田野场景→城市场景→田野，每段 2.35 s。在 0.2–1.9 s，持续 1.7 s，像素块尺寸依次增大后再减小，尺寸档位为 1、2、3、4、6、8、11、15、20、27 和 36 px；中点 1.05 s 时最粗糙。
+//   - 前半段显示旧场景，后半段显示新场景，在最大像素块档位时切换。
+//   - 实现方法：开启图像平滑，将画面缩小至“原宽度 ÷ 像素块尺寸”；然后关闭图像平滑，放大回原尺寸。
+// 适用场景: 适合游戏、复古或数字感转场，也可在切换时将画面内容像素化遮蔽。
+// 标签: pixelate, mosaic, pixel, transition, retro, 8-bit, scene-change, 像素化, 转场, 马赛克, 游戏, 复古, 数字
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#141
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 21
+// 21 ピクセレート（画面がだんだん粗いモザイクになり、いちばん粗いところで切り替わって細かく戻る）
+const SMC = mkCanvas(CW, CH), SMK = SMC.getContext('2d');
+const BLV = [1, 2, 3, 4, 6, 8, 11, 15, 20, 27, 36];
+CELLS[20] = abCell((k, w, h, u, a, b) => {
+  const S = [scField, scCity], p = P(u, TA - 0.3, TB + 0.4), tri = 1 - Math.abs(2 * p - 1), bs = BLV[Math.round(tri * (BLV.length - 1))];
+  const scr = p < 0.5 ? a : b;
+  if (bs <= 1) return S[scr](k, w, h);
+  TK.setTransform(1, 0, 0, 1, 0, 0); TK.globalCompositeOperation = 'source-over'; TK.clearRect(0, 0, w, h); S[scr](TK, w, h);
+  const sw = Math.ceil(w / bs), sh = Math.ceil(h / bs);
+  SMK.setTransform(1, 0, 0, 1, 0, 0); SMK.clearRect(0, 0, CW, CH); SMK.imageSmoothingEnabled = true; SMK.imageSmoothingQuality = 'high'; SMK.drawImage(TMP, 0, 0, sw, sh);
+  k.imageSmoothingEnabled = false; k.drawImage(SMC, 0, 0, sw, sh, 0, 0, sw * bs, sh * bs); k.imageSmoothingEnabled = true;
+});

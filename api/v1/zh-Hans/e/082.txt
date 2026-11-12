@@ -1,0 +1,34 @@
+// Motion Prompt #082 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#082
+//
+// 悬停图片放大 / Image zoom on hover
+// 分类: lp (落地页与网页效果) · element 10 · 子类别: 悬停与点击交互
+// 示例表现: 光标下的照片缓慢放大，外框尺寸保持不变；光标离开后照片缩回。
+// 动画参数与实现规则:
+//   - 两个图片框的尺寸为 222 × 118，圆角半径 8。光标先停在左图，再停在右图，每次约 1.5 s。
+//   - 悬停时，图片内容在 0.5 s 内以中心为原点从 1→1.15 缩放，使用三次缓出；离开时在 0.5 s 内恢复。
+//   - 超出图片框的部分被裁切，即 overflow: hidden；外框和标题均不移动。
+// 适用场景: 适合作品、商品或文章的图片网格，用来提示当前即将选择的项目。
+// 标签: hover, zoom, image, scale, overflow-hidden, thumbnail, gallery, 悬停放大, 图片, 缩放, 裁切, 作品集, 商品图
+// 尺寸: 539x208 px · 周期: 4.8 s
+// 依赖: kit lp -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/lp.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#082
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 10
+// 10 ホバーで画像ズーム（枠はそのままで、中の写真だけがゆっくり拡大する）
+CELLS[9] = (k, w, h, u) => {
+  frame(k);
+  const FX = [22, 267], FY = 16, FW = 222, FH = 118, ZOOM = 0.15;
+  const cur = t => path([[0, 60, 160], [0.5, 120, 70], [1.8, 140, 84], [2.2, 370, 70], [3.4, 390, 84], [3.9, 470, 160], [4.8, 60, 160]], t);
+  view(k, () => {
+    for (let i = 0; i < 2; i++) {
+      const inside = t => { const [x, y] = cur(t); return x > FX[i] && x < FX[i] + FW && y > FY && y < FY + FH; };
+      const q = trans(inside, u, 0.5);
+      pic(k, FX[i], FY, FW, FH, i, 8, 1 + ZOOM * q);
+      txt(k, ['夏日山间小屋', '海边咖啡馆'][i], FX[i], FY + FH + 20, `800 13px ${JP}`, C.ink); bars(k, FX[i], FY + FH + 28, 150, 1);
+    }
+    const [cx, cy] = cur(u); cursor(k, cx, cy);
+  });
+};

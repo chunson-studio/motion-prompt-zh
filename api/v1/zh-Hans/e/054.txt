@@ -1,0 +1,36 @@
+// Motion Prompt #054 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#054
+//
+// 文字提示 / Tooltip
+// 分类: ui (UI 组件) · element 06 · 子类别: 浮层与展开
+// 示例表现: 鼠标悬停在“?”图标上方时，深色气泡显示简短说明；光标离开后消失。
+// 动画参数与实现规则:
+//   - 在 542×191 的卡片上，周期为 4.5 s。标签旁的位置 (196, 121) 有一个“?”图标，蓝色圆环半径 13。
+//   - 光标仅悬停，不点击：在 1.05 s 到达“?”，停留至 3.15 s，并在 4.1 s 前离开卡片。
+//   - 显示进度 a 在 1.15–1.35 s 从 0→1，使用 easeOutCubic（三次缓出）；不透明度为 a，同时向上移动 6 px 到位。
+//   - 气泡：颜色 #26282c，尺寸 184×36、圆角半径 8，顶边位于 y = 64；带一个宽 16、高 8 的向下三角尖角，指向图标；文字为白色，字号 15 px。
+//   - 隐藏：在 3.25–3.45 s 线性地从 1→0。
+// 适用场景: 适合给图标或缩写添加一行提示，同时不占据页面的固定空间。
+// 标签: tooltip, hint, hover, help, info, title, 文字提示, 悬停, 气泡, 图标, 说明, 辅助
+// 尺寸: 542x191 px · 周期: 4.5 s
+// 依赖: kit ui -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/ui.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#054
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 06
+// 06 ツールチップ（Tooltip）
+CELLS[5] = ui((w, h, t) => {
+  pageLines(24, 16, 494);
+  bar(24, 116, 150, C.line2, 11); ring(196, 121, 13, C.blue, 2.2); text('?', 196, 122, 16, C.blue, 700, 'center', NUMF);
+  fillRR(24, 146, 494, 34, 8, C.block);
+  const a = eo(seg(t, 1.15, 1.35)) * (1 - seg(t, 3.25, 3.45));
+  if (a > 0) {
+    X.save(); X.globalAlpha = a; const yy = 64 + 6 * (1 - a);
+    fillRR(196 - 92, yy, 184, 36, 8, C.dark);
+    X.beginPath(); X.moveTo(196 - 8, yy + 36); X.lineTo(196, yy + 44); X.lineTo(196 + 8, yy + 36); X.fillStyle = C.dark; X.fill();
+    text('显示简短说明', 196, yy + 18, 15, '#fff', 600, 'center'); X.restore();
+  }
+  // 乗せるだけ（クリックしない）
+  pointer([[.3, w + 30, h + 30], [1.05, 200, 126], [3.15, 200, 126], [4.1, w + 30, h + 30]], [], t);
+});

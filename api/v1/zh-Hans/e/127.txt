@@ -1,0 +1,48 @@
+// Motion Prompt #127 · MIT License (c) 2026 Shohei Ohtaki · https://showheyohtaki.github.io/motion-prompt/#127
+//
+// 往返循环 / Ping-pong loop
+// 分类: motion2 (动态图形（第 2 弹）) · element 07 · 子类别: 动效技巧
+// 示例表现: 方形移动到一端，再像倒放一样沿原路径返回，持续往返。
+// 动画参数与实现规则:
+//   - 每 4.7 s 完成一次往返，先正向播放 2.35 s，再将同一动作倒放 2.35 s；进度 g 线性变化为 0→1→0。
+//   - 主体为边长 48 px、圆角半径 13 的薄荷绿色方形，从 x = 92 跳到 447，沿三个高度为 62·|sin(3πg)| 的弧线运动，并随 g 旋转一整圈。
+//   - 绘制四个残影副本，时间间隔为 0.045 s，不透明度为 0.1–0.4。
+//   - 下方显示播放条：前进时为蓝色并显示播放标签，返回时为珊瑚色并显示倒放标签；进度条与滑块随 g 移动。
+//   - 两端用竖柱标出折返点。
+// 适用场景: 适合加载、待机或需要连续往返且没有跳切的动画。
+// 标签: ping-pong, loop, boomerang, yoyo, reverse, back-and-forth, loader, 往返循环, 倒放, 加载, 残影, 路径, 无缝循环
+// 尺寸: 539x208 px · 周期: 4.7 s
+// 依赖: kit motion2 -> https://showheyohtaki.github.io/motion-prompt/api/v1/kit/motion2.js
+// 原版动态示例: https://showheyohtaki.github.io/motion-prompt/#127
+//
+// cells[i](k, w, h, u)：k 为 CanvasRenderingContext2D（调用前已清空画布并由 save/restore 包裹），w、h 为尺寸，u 为秒数，范围 [0, cycle)。画面仅由 u 决定。
+// 以下为单个效果的代码。CELLS、常量和辅助函数在对应的 kit 文件中。原始代码与版权声明按 MIT 许可保留。
+
+// @element 07
+// 07 ピンポンループ（端まで行ったら、同じ道を逆再生のように戻ってくる。往復をくり返す）
+CELLS[6] = (k, w, h, u) => {
+  u = snapU(u);
+  stage(k);
+  const q = u / CYC, fwd = q < 0.5, g = fwd ? 2 * q : 2 - 2 * q, X0 = 92, X1 = w - 92, base = 136, S = 48;
+  const pos = gg => [lerp(X0, X1, gg), base - 62 * Math.abs(Math.sin(3 * Math.PI * gg))];
+  k.save(); k.setLineDash([2, 12]); k.lineCap = 'round'; k.strokeStyle = C.navy3; k.lineWidth = 5; k.beginPath();
+  for (let i = 0; i <= 150; i++) { const [px, py] = pos(i / 150); i ? k.lineTo(px, py - S / 2) : k.moveTo(px, py - S / 2); } k.stroke(); k.restore();
+  k.fillStyle = C.navy3; rr(k, X0 - 40, base + 2, X1 - X0 + 80, 5, 2.5); k.fill();
+  // 両端の折り返し点
+  [X0, X1].forEach(xx => { k.fillStyle = C.navy3; rr(k, xx - 4, base - 70, 8, 72, 4); k.fill(); });
+  // 残像
+  for (let j = 4; j >= 1; j--) { const qq = mod(u - j * 0.045, CYC) / CYC, gg = qq < 0.5 ? 2 * qq : 2 - 2 * qq, [gx, gy] = pos(gg); k.globalAlpha = 0.1 * (5 - j); k.fillStyle = C.mint; k.save(); k.translate(gx, gy - S / 2); k.rotate(gg * Math.PI * 2); rr(k, -S / 2, -S / 2, S, S, 13); k.fill(); k.restore(); }
+  k.globalAlpha = 1;
+  const [x, y] = pos(g);
+  k.save(); k.translate(x, y - S / 2); k.rotate(g * Math.PI * 2);
+  k.fillStyle = C.mint; rr(k, -S / 2, -S / 2, S, S, 13); k.fill();
+  k.fillStyle = '#fff'; k.beginPath(); k.arc(S / 2 - 13, -S / 2 + 13, 6.5, 0, 7); k.fill();
+  k.restore();
+  // 再生バー
+  const ty = 184, tx0 = 196, tx1 = w - 34;
+  k.fillStyle = fwd ? C.blue : C.coral; rr(k, 22, ty - 20, 158, 40, 20); k.fill();
+  txt(k, fwd ? '▶ 播放' : '◀ 倒放', 101, ty + 1, `800 25px ${JP}`, '#fff', 'center', 'middle');
+  k.fillStyle = C.navy3; rr(k, tx0, ty - 5, tx1 - tx0, 10, 5); k.fill();
+  k.fillStyle = fwd ? C.blue : C.coral; rr(k, tx0, ty - 5, Math.max(10, (tx1 - tx0) * g), 10, 5); k.fill();
+  k.fillStyle = C.yel; k.beginPath(); k.arc(tx0 + (tx1 - tx0) * g, ty, 12, 0, 7); k.fill();
+};
